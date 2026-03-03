@@ -16,8 +16,10 @@ import axios from 'axios';
 import { setProducts } from '@/redux/productSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import Constants from "expo-constants";
+import * as ImageManipulator from 'expo-image-manipulator';
 
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL
+const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
 
 export default function AdminProduct() {
@@ -31,26 +33,43 @@ export default function AdminProduct() {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  // --- IMAGE PICKER FEATURE ---
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 0.8,
+      quality: 1, 
     });
 
     if (!result.canceled) {
-      const newImages = result.assets.map(asset => ({
-        uri: asset.uri,
-        name: asset.fileName || `img_${Date.now()}.jpg`,
-        type: 'image/jpeg',
-        isNew: true // To distinguish for FormData
-      }));
+      setIsUpdating(true); 
+      try {
+        const processedImages = await Promise.all(
+          result.assets.map(async (asset) => {
+            const manipResult = await ImageManipulator.manipulateAsync(
+              asset.uri,
+              [{ resize: { width: 1000 } }], 
+              { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+            );
 
-      setEditProduct(prev => ({
-        ...prev,
-        productImg: [...prev.productImg, ...newImages]
-      }));
+            return {
+              uri: manipResult.uri,
+              name: asset.fileName || `update_${Date.now()}.jpg`,
+              type: 'image/jpeg',
+              isNew: true 
+            };
+          })
+        );
+
+        setEditProduct(prev => ({
+          ...prev,
+          productImg: [...prev.productImg, ...processedImages]
+        }));
+      } catch (error) {
+        Alert.alert("Error", "Failed to process images.");
+        console.log(error);
+      } finally {
+        setIsUpdating(false);
+      }
     }
   };
 
@@ -60,16 +79,13 @@ export default function AdminProduct() {
     setEditProduct({ ...editProduct, productImg: updatedImages });
   };
 
-  // --- SAVE FEATURE ---
-  // --- SAVE FEATURE WITH CONFIRMATION ---
+
   const handleSave = async () => {
-    // 1. Validation check (Optional but recommended)
     if (!editProduct.productName || !editProduct.productPrice) {
       Alert.alert("Error", "Please fill in all required fields.");
       return;
     }
 
-    // 2. Show Confirmation Popup
     Alert.alert(
       "Confirm Changes",
       "Are you sure you want to save these changes to the product?",
@@ -85,13 +101,11 @@ export default function AdminProduct() {
             formData.append("productPrice", editProduct.productPrice);
             formData.append("category", editProduct.category);
 
-            // Filter existing images
             const existingImages = editProduct.productImg
               .filter(img => !img.isNew && img.public_id)
               .map(img => img.public_id);
             formData.append("existingImages", JSON.stringify(existingImages));
 
-            // Append new files
             editProduct.productImg
               .filter(img => img.isNew)
               .forEach((file) => {
@@ -112,7 +126,6 @@ export default function AdminProduct() {
               });
 
               if (res.data.success) {
-                // REDUX SYNC
                 const updatedList = products.map((item) =>
                   item._id === editProduct._id ? res.data.product : item
                 );

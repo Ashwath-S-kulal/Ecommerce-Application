@@ -31,6 +31,7 @@ import { addAddress, deleteAddress, setSelectedAddress, setAddresses } from "@/r
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
+import Constants from "expo-constants";
 
 const { width } = Dimensions.get("window");
 
@@ -51,7 +52,7 @@ export default function AddressForm({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const router = useRouter();
   const dispatch = useDispatch();
-  const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL
+  const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
   const subtotal = cart?.totalPrice || 0;
   const shipping = subtotal > 5000 ? 0 : 50;
@@ -411,7 +412,7 @@ export default function AddressForm({ navigation }) {
           }}
           className="absolute bottom-10 self-center bg-black/80 px-6 py-3 rounded-full shadow-lg"
         >
-          <Text className="text-white font-bold text-[10px] uppercase tracking-widest">{toastMsg}</Text>
+          <Text className="text-white font-bold text-[10px] tracking-widest">{toastMsg}</Text>
         </Animated.View>
       ) : null}
     </SafeAreaView>

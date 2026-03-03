@@ -12,6 +12,8 @@ import {
 } from 'lucide-react-native';
 import { LineChart } from "react-native-chart-kit";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from "expo-constants";
+
 
 const { width } = Dimensions.get('window');
 
@@ -26,7 +28,7 @@ const AdminDashboard = () => {
   const [monthlyData, setMonthlyData] = useState(null);
   const [yearlyData, setYearlyData] = useState(null);
 
-  const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL
+  const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
   const fetchDashboardData = async () => {
     try {

@@ -1,29 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
+  ScrollView,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
-  Alert,
+  Animated,
+  Dimensions,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { 
-  Eye, 
-  EyeOff, 
-  Mail, 
-  Lock, 
-  User, 
-  Timer, 
-  RotateCcw, 
-  ChevronRight, 
-  ArrowLeft 
+import {
+  Eye, EyeOff, Mail, Timer, RotateCcw
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import axios from "axios";
+import Constants from "expo-constants";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
 export default function SignUp() {
   const [step, setStep] = useState(1);
@@ -42,8 +41,18 @@ export default function SignUp() {
   });
   const [otp, setOtp] = useState("");
   const router = useRouter();
+  const [toastMsg, setToastMsg] = useState("");
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  // Timer Logic
+  const showToast = (text) => {
+    setToastMsg(text);
+    Animated.sequence([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+      Animated.delay(1500),
+      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+    ]).start(() => setToastMsg(""));
+  };
+
   useEffect(() => {
     let interval;
     if (step === 2) {
@@ -61,187 +70,235 @@ export default function SignUp() {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
-  const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL // Replace with your IP
-
-  // Handlers
-  const submitHandler = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      return Alert.alert("Error", "Passwords do not match!");
-    }
-    setLoading(true);
+  const handleResendOTP = async () => {
     try {
-      const res = await axios.post(`${BASE_URL}/api/user/register`, formData);
+      setResending(true);
+      const res = await axios.post(`${BASE_URL}/api/user/resendotp`, { email: formData.email });
       if (res.data.success) {
-        setStep(2);
+        showToast("A fresh code has been sent!");
         setTimeLeft(600);
         setResendCooldown(60);
+        setOtp("");
       }
     } catch (error) {
-      Alert.alert("Error", error.response?.data?.message || "Registration failed");
+      showToast(error.response?.data?.message || "Failed to resend OTP");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const submitHandler = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      return showToast("Passwords do not match!");
+    }
+    try {
+      setLoading(true);
+      const res = await axios.post(`${BASE_URL}/api/user/register`, formData);
+      if (res.data.success) {
+        showToast("Verification code sent!");
+        setStep(2);
+      }
+    } catch (error) {
+      showToast(error.response?.data?.message || "Registration failed");
     } finally {
       setLoading(false);
     }
   };
 
   const otpVerifyHandler = async () => {
-    if (timeLeft === 0) return Alert.alert("Error", "OTP Expired. Please resend code.");
-    setLoading(true);
+    if (timeLeft === 0) return showToast("OTP Expired. Please resend code.");
     try {
+      setLoading(true);
       const res = await axios.post(`${BASE_URL}/api/user/verifysignup`, {
         email: formData.email,
         otp: otp,
       });
       if (res.data.success) {
-        Alert.alert("Welcome", "Account activated!");
-        router.replace("/login");
+        showToast("Welcome to Sanjeevini!");
+        setTimeout(() => router.push("/login"), 1000);
       }
     } catch (error) {
-      Alert.alert("Error", error.response?.data?.message || "Invalid OTP");
+      showToast(error.response?.data?.message || "Invalid OTP");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-50">
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} className="flex-1">
-        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }} className="px-8">
-          
-          {/* Header */}
-          <View className="mb-8">
-            {step === 2 && (
-              <TouchableOpacity onPress={() => setStep(1)} className="mb-4 w-10 h-10 items-center justify-center bg-white rounded-full border border-slate-100 shadow-sm">
-                <ArrowLeft size={20} color="#0F172A" />
-              </TouchableOpacity>
-            )}
-            <Text className="text-4xl font-black text-slate-900 tracking-tighter">
-              {step === 1 ? "Join Us." : "Verify."}
-            </Text>
-            <Text className="text-lg text-slate-500 font-medium mt-1">
-              {step === 1 ? "Create your account today." : `Code sent to ${formData.email}`}
-            </Text>
-          </View>
+    <SafeAreaView className="flex-1 bg-white sm:bg-[#fdf2f8]">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "android" || "ios" ? "padding" : "height"}
+        className="flex-1"
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 
-          {/* Form */}
-          <View className="space-y-4">
-            {step === 1 ? (
-              <>
-                <View className="flex-row space-x-3">
-                  <View className="flex-1">
-                    <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">First Name</Text>
-                    <TextInput 
-                      className="bg-white h-14 rounded-2xl px-5 border border-slate-100 shadow-sm font-semibold"
-                      placeholder="John"
-                      value={formData.firstName}
-                      onChangeText={(t) => setFormData({...formData, firstName: t})}
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">Last Name</Text>
-                    <TextInput 
-                      className="bg-white h-14 rounded-2xl px-5 border border-slate-100 shadow-sm font-semibold"
-                      placeholder="Doe"
-                      value={formData.lastName}
-                      onChangeText={(t) => setFormData({...formData, lastName: t})}
-                    />
-                  </View>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+          >
+            <View className="px-6 py-10">
+              <View className="bg-white sm:border sm:border-gray-100 sm:rounded-[32px] sm:shadow-xl p-2">
+                <View className="items-center mb-8">
+                  <Text className="text-3xl font-black text-gray-900" numberOfLines={1}>
+                    {step === 1 ? "Create Account" : "Verify Email"}
+                  </Text>
+                  <Text className="text-gray-500 font-medium text-center mt-2 px-4 text-sm leading-5">
+                    {step === 1
+                      ? "Join us today! It only takes a minute."
+                      : `We sent a security code to\n${formData.email}`}
+                  </Text>
                 </View>
 
-                <View>
-                  <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">Email</Text>
-                  <View className="flex-row items-center bg-white h-14 rounded-2xl px-5 border border-slate-100 shadow-sm">
-                    <Mail size={18} color="#94a3b8" />
-                    <TextInput 
-                      className="flex-1 ml-3 font-semibold"
-                      placeholder="hello@example.com"
-                      autoCapitalize="none"
-                      keyboardType="email-address"
-                      value={formData.email}
-                      onChangeText={(t) => setFormData({...formData, email: t})}
-                    />
-                  </View>
-                </View>
+                <View className="space-y-5 px-2">
+                  {step === 1 ? (
+                    <View className="space-y-4">
+                      <View className="flex-row gap-3">
+                        <View className="flex-1">
+                          <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1">First Name</Text>
+                          <TextInput
+                            placeholder="John"
+                            value={formData.firstName}
+                            onChangeText={(val) => setFormData({ ...formData, firstName: val })}
+                            className="bg-gray-50 border border-gray-100 rounded-2xl h-14 px-4 text-gray-800"
+                          />
+                        </View>
+                        <View className="flex-1">
+                          <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1">Last Name</Text>
+                          <TextInput
+                            placeholder="Doe"
+                            value={formData.lastName}
+                            onChangeText={(val) => setFormData({ ...formData, lastName: val })}
+                            className="bg-gray-50 border border-gray-100 rounded-2xl h-14 px-4 text-gray-800"
+                          />
+                        </View>
+                      </View>
 
-                <View>
-                  <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2 ml-1">Password</Text>
-                  <View className="flex-row items-center bg-white h-14 rounded-2xl px-5 border border-slate-100 shadow-sm">
-                    <Lock size={18} color="#94a3b8" />
-                    <TextInput 
-                      className="flex-1 ml-3 font-semibold"
-                      placeholder="••••••••"
-                      secureTextEntry={!showPassword}
-                      value={formData.password}
-                      onChangeText={(t) => setFormData({...formData, password: t})}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <EyeOff size={18} color="#94a3b8" /> : <Eye size={18} color="#94a3b8" />}
+                      <View>
+                        <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1 mt-5">Email Address</Text>
+                        <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 h-14">
+                          <Mail size={18} color="#d1d5db" />
+                          <TextInput
+                            placeholder="yourname@gmail.com"
+                            keyboardType="email-address"
+                            autoCapitalize="none"
+                            value={formData.email}
+                            onChangeText={(val) => setFormData({ ...formData, email: val })}
+                            className="flex-1 ml-3 text-gray-800"
+                          />
+                        </View>
+                      </View>
+
+                      <View>
+                        <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1 mt-5">Password</Text>
+                        <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 h-14">
+                          <TextInput
+                            placeholder="••••••••"
+                            secureTextEntry={!showPassword}
+                            value={formData.password}
+                            onChangeText={(val) => setFormData({ ...formData, password: val })}
+                            className="flex-1 text-gray-800"
+                          />
+                          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                            {showPassword ? <EyeOff size={18} color="#d1d5db" /> : <Eye size={18} color="#d1d5db" />}
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+
+                      <View>
+                        <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1 mt-5">Confirm Password</Text>
+                        <TextInput
+                          placeholder="••••••••"
+                          secureTextEntry
+                          value={formData.confirmPassword}
+                          onChangeText={(val) => setFormData({ ...formData, confirmPassword: val })}
+                          className={`bg-gray-50 border rounded-2xl h-14 px-4 text-gray-800 ${formData.confirmPassword && formData.password !== formData.confirmPassword
+                              ? "border-red-300" : "border-gray-100"
+                            }`}
+                        />
+                      </View>
+                    </View>
+                  ) : (
+                    <View className="space-y-6">
+                      <View className="bg-pink-50/80 border border-pink-100 p-5 rounded-md flex-row justify-between items-center mb-4">
+                        <Text className="text-[10px] uppercase font-black text-pink-400 tracking-tighter">Code Expires In</Text>
+                        <View className="flex-row items-center gap-2">
+                          <Timer size={18} color="#db2777" />
+                          <Text className="font-bold text-pink-600 text-xl font-mono">{formatTime(timeLeft)}</Text>
+                        </View>
+                      </View>
+
+                      <View className="space-y-4">
+                        <TextInput
+                          maxLength={6}
+                          keyboardType="number-pad"
+                          placeholder="000000"
+                          value={otp}
+                          onChangeText={setOtp}
+                          className="text-center text-4xl font-black h-24 bg-white border border-pink-100  rounded-md shadow-sm shadow-pink-100 mb-5"
+                        />
+                        <TouchableOpacity
+                          disabled={resendCooldown > 0 || resending}
+                          onPress={handleResendOTP}
+                          className="flex-row items-center justify-center gap-2"
+                        >
+                          {resending ? <ActivityIndicator size="small" color="#db2777" /> : <RotateCcw size={14} color={resendCooldown > 0 ? "#9ca3af" : "#db2777"} />}
+                          <Text className={`text-xs font-bold ${resendCooldown > 0 ? "text-gray-400" : "text-pink-600"}`} numberOfLines={1}>
+                            {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Submit Button */}
+                  <TouchableOpacity
+                    disabled={loading || (step === 2 && timeLeft === 0)}
+                    onPress={step === 1 ? submitHandler : otpVerifyHandler}
+                    activeOpacity={0.8}
+                    className={`w-full h-16 rounded-md items-center justify-center shadow-lg shadow-gray-200 mt-4 ${step === 1 ? "bg-pink-600" : "bg-emerald-600"
+                      }`}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="white" />
+                    ) : (
+                      <Text className="text-white font-black text-lg" numberOfLines={1}>
+                        {step === 1 ? "Get OTP Code" : "Verify & Activate"}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+
+                  {/* Footer */}
+                  <View className="flex-row justify-center items-center py-6">
+                    <Text className="text-sm text-gray-500 font-medium" numberOfLines={1}>Already have an account.?</Text>
+                    <TouchableOpacity onPress={() => router.push("/login")}>
+                      <Text className="ml-2 text-pink-600 font-black text-sm" numberOfLines={1}>Log In</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
-              </>
-            ) : (
-              // OTP STEP
-              <View className="space-y-6">
-                <View className="bg-pink-50 p-4 rounded-2xl flex-row justify-between items-center border border-pink-100">
-                  <View className="flex-row items-center">
-                    <Timer size={18} color="#db2777" />
-                    <Text className="ml-2 font-mono font-bold text-pink-600 text-lg">{formatTime(timeLeft)}</Text>
-                  </View>
-                  <Text className="text-[10px] font-black text-pink-400 uppercase tracking-tighter">Expires In</Text>
-                </View>
-
-                <TextInput 
-                  className="bg-white h-20 rounded-3xl text-center text-3xl font-black text-pink-600 border border-pink-100 shadow-xl shadow-pink-100 tracking-[15px]"
-                  maxLength={6}
-                  keyboardType="number-pad"
-                  placeholder="000000"
-                  value={otp}
-                  onChangeText={setOtp}
-                  autoFocus
-                />
-
-                <TouchableOpacity 
-                  disabled={resendCooldown > 0 || resending}
-                  className="items-center"
-                  onPress={() => {/* Resend Logic */}}
-                >
-                  <Text className={`font-bold text-xs ${resendCooldown > 0 ? 'text-slate-400' : 'text-pink-600'}`}>
-                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend Code"}
-                  </Text>
-                </TouchableOpacity>
               </View>
-            )}
+            </View>
+          </ScrollView>
 
-            {/* Action Button */}
-            <TouchableOpacity 
-              onPress={step === 1 ? submitHandler : otpVerifyHandler}
-              disabled={loading}
-              activeOpacity={0.8}
-              className={`h-16 rounded-2xl items-center justify-center flex-row shadow-lg mt-4 ${step === 1 ? 'bg-pink-600 shadow-pink-200' : 'bg-emerald-600 shadow-emerald-200'}`}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <>
-                  <Text className="text-white text-lg font-bold mr-2">
-                    {step === 1 ? "Get OTP Code" : "Verify & Activate"}
-                  </Text>
-                  <ChevronRight size={20} color="white" />
-                </>
-              )}
-            </TouchableOpacity>
-          </View>
+        </TouchableWithoutFeedback>
 
-          {/* Footer */}
-          {step === 1 && (
-            <TouchableOpacity onPress={() => router.push("/login")} className="mt-8 items-center">
-              <Text className="text-slate-500 font-medium">
-                Member already? <Text className="text-pink-600 font-bold">Log In</Text>
-              </Text>
-            </TouchableOpacity>
-          )}
 
-        </ScrollView>
+        {/* Floating Toast Notification */}
+        {toastMsg ? (
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+              position: 'absolute',
+              bottom: 50,
+              left: 20,
+              right: 20
+            }}
+            className="bg-gray-900 px-6 py-4 rounded-2xl items-center shadow-2xl"
+          >
+            <Text className="text-white font-bold text-xs tracking-widest text-center">{toastMsg}</Text>
+          </Animated.View>
+        ) : null}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

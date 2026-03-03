@@ -21,9 +21,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { setProducts, setCart, setWishlist } from "../../redux/productSlice";
 import { Feather, FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import Constants from "expo-constants";
+import { debounce } from "lodash"
 
 const { width } = Dimensions.get("window");
-const BASE_URL =  process.env.EXPO_PUBLIC_BASE_URL
+const BASE_URL =  Constants.expoConfig.extra.apiUrl;
+
 
 export default function Shop() {
   const dispatch = useDispatch();
@@ -39,6 +42,45 @@ export default function Shop() {
     const [visibleItems, setVisibleItems] = useState(12);
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const fetchSuggestions = useMemo(
+    () =>
+      debounce(async (query) => {
+        if (query.length < 2) {
+          setSuggestions([]);
+          return;
+        }
+        try {
+          const res = await axios.get(`${BASE_URL}/api/product/search?q=${query}`);
+          if (res.data.success) {
+            setSuggestions(res.data.products);
+          }
+        } catch (err) {
+          console.error("Suggestion error:", err);
+        }
+      }, 500),
+    []
+  );
+
+  const handleSearchChange = (text) => {
+    setSearch(text);
+    setVisibleItems(12);
+    if (text.length > 1) {
+      setShowSuggestions(true);
+      fetchSuggestions(text);
+    } else {
+      setShowSuggestions(false);
+    }
+  };
+
+  const selectSuggestion = (item) => {
+    setSearch(item.productName);
+    setShowSuggestions(false);
+    router.push(`/product/${item._id}`);
+  };
 
   const showToast = (text) => {
     setToastMsg(text);
@@ -100,7 +142,7 @@ export default function Shop() {
       const res = await axios.post(`${BASE_URL}/api/cart/add`, { productId }, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data.success) {
         dispatch(setCart(res.data.cart));
-        showToast("Added to bag");
+        showToast("Added to Cart");
       }
     } catch (e) { showToast("Failed to add to cart"); }
   };
@@ -117,28 +159,72 @@ export default function Shop() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8F9FA]">
-      <View className="px-6 py-3 bg-white flex-row items-center gap-3 border-b border-gray-100">
-        <View className="flex-1 bg-gray-100 flex-row items-center px-4 rounded-xl">
-          <Feather name="search" size={18} color="#9ca3af" />
-          <TextInput
-            placeholder="Search..."
-            className="flex-1 h-12 ml-2 font-semibold text-gray-800"
-            value={search}
-            onChangeText={(text) => {
-                setSearch(text);
-                setVisibleItems(12); 
-            }}
-          />
+      <View className="px-6 py-3 bg-white border-b border-gray-100 z-50">
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1 bg-gray-100 flex-row items-center px-4 rounded-xl">
+            <Feather name="search" size={18} color="#9ca3af" />
+            <TextInput
+              placeholder="Search products..."
+              className="flex-1 h-12 ml-2 font-semibold text-gray-800"
+              value={search}
+              onChangeText={handleSearchChange}
+              onFocus={() => search.length > 1 && setShowSuggestions(true)}
+            />
+            {search.length > 0 && (
+              <TouchableOpacity onPress={() => {setSearch(""); setShowSuggestions(false);}}>
+                <Ionicons name="close-circle" size={18} color="#9ca3af" />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          <TouchableOpacity 
+            onPress={() => setFilterModalVisible(true)} 
+            className="border border-gray-200 p-3 rounded-xl flex-row items-center gap-1 bg-white"
+          >
+            <Feather name="filter" size={13} color="black" />
+            <Text className="text-black text-md font-bold">Filters</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => setFilterModalVisible(true)} className="border p-3 rounded-xl flex-row items-center gap-1">
-          <Feather name="filter" size={13} color="black" /><Text className="text-black text-md font-bold" numberOfLines={1}>Filters</Text>
-        </TouchableOpacity>
+
+        {showSuggestions && suggestions.length > 0 && (
+          <View 
+            className="absolute top-[60px] left-6 right-6 bg-white shadow-2xl rounded-2xl border border-gray-100 overflow-hidden"
+            style={{ zIndex: 1000, elevation: 5 }}
+          >
+            {suggestions.map((item) => (
+              <TouchableOpacity
+                key={item._id}
+                onPress={() => selectSuggestion(item)}
+                className="flex-row items-center p-3 border-b border-gray-50 active:bg-gray-50"
+              >
+                <Image 
+                  source={{ uri: item.productImg?.[0]?.url }} 
+                  className="w-10 h-10 rounded-lg mr-3 bg-gray-50"
+                  resizeMode="cover"
+                />
+                <View className="flex-1">
+                  <Text className="font-bold text-gray-900 text-[11px]" numberOfLines={1}>
+                    {item.productName}
+                  </Text>
+                  <Text className="text-pink-500 font-black text-[10px]">
+                    ₹{item.productPrice.toLocaleString()}
+                  </Text>
+                </View>
+                <Feather name="arrow-up-left" size={14} color="#9ca3af" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
 
       {loading ? (
         <View className="flex-1 justify-center"><ActivityIndicator size="large" color="#000" /></View>
       ) : (
-        <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          className="px-4 pt-4"
+          onTouchStart={() => setShowSuggestions(false)} 
+        >
           <View className="flex-row flex-wrap justify-between ">
             {paginatedProducts.map((item) => (
               <ProductCard
@@ -185,7 +271,7 @@ export default function Shop() {
           style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}
           className="absolute bottom-10 self-center bg-black/80 px-6 py-3 rounded-full shadow-lg"
         >
-          <Text className="text-white font-bold text-xs uppercase tracking-widest">{toastMsg}</Text>
+          <Text className="text-white font-bold text-xs tracking-widest">{toastMsg}</Text>
         </Animated.View>
       ) : null}
     </SafeAreaView>
@@ -196,13 +282,13 @@ export default function Shop() {
 
 
 const ProductCard = ({ item, onWishlist, onAddToCart, isInWishlist, onPress }) => (
-  <View style={{ width: width * 0.45 }} className="bg-white rounded-xl mb-5 p-2 shadow-sm border border-gray-50">
+  <View style={{ width: width * 0.45 }} className="bg-white rounded-md mb-5 p-2 shadow-sm border border-gray-50">
     <View className="relative bg-white rounded-xl overflow-hidden p-2">
       <TouchableOpacity onPress={onPress} >
         <Image source={{ uri: item?.productImg?.[0]?.url }} className="w-full h-40 rounded-xl" resizeMode="contain" />
       </TouchableOpacity>
       <TouchableOpacity onPress={onWishlist} className="absolute top-1 right-1 p-2 bg-white shadow-sm rounded-full">
-        <FontAwesome name={isInWishlist ? "heart" : "heart-o"} size={16} color={isInWishlist ? "#ec4899" : "#9ca3af"} />
+        <FontAwesome name={isInWishlist ? "heart" : "heart-o"} size={18} color={isInWishlist ? "#ec4899" : "#9ca3af"} />
       </TouchableOpacity>
     </View>
     <View className="p-2">

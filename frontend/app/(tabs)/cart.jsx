@@ -5,8 +5,9 @@ import { useRouter } from 'expo-router';
 import { Trash2, Minus, Plus, ArrowLeft, Truck, ShoppingCart, ChevronRight } from 'lucide-react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setCart } from '../../redux/productSlice'; // Adjust path based on your folder structure
+import { setCart } from '../../redux/productSlice'; 
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 
 
 export default function Cart() {
@@ -20,9 +21,9 @@ export default function Cart() {
 
   const progressToFreeShipping = Math.min((subTotal / freeShippingThreshold) * 100, 100);
 
-  // In mobile, use your machine's IP (e.g., 192.168.x.x) instead of localhost
-  const API = `${process.env.EXPO_PUBLIC_BASE_URL}/api/cart`;
+  const API = `${Constants.expoConfig.extra.apiUrl}/api/cart`;
 
+console.log("BASE URL:", process.env.EXPO_PUBLIC_BASE_URL);
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -220,7 +221,7 @@ export default function Cart() {
           style={{ opacity: fadeAnim, transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }}
           className="absolute bottom-10 self-center bg-black/80 px-6 py-3 rounded-full shadow-lg"
         >
-          <Text className="text-white font-bold text-xs uppercase tracking-widest">{toastMsg}</Text>
+          <Text className="text-white font-bold text-xs  tracking-widest">{toastMsg}</Text>
         </Animated.View>
       ) : null}
 

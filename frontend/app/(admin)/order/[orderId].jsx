@@ -12,8 +12,10 @@ import {
 } from "lucide-react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 
-const BASE_URI = process.env.EXPO_PUBLIC_BASE_URL
+
+const BASE_URI = Constants.expoConfig.extra.apiUrl;
 
 export default function OrderDetailsPage() {
     const { orderId } = useLocalSearchParams();

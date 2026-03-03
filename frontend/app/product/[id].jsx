@@ -18,10 +18,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setCart, setWishlist } from "../../redux/productSlice";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+const { width } = Dimensions.get("window");
+import Constants from "expo-constants";
 import ImageViewing from "react-native-image-viewing";
 
-const { width } = Dimensions.get("window");
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
+
+const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
 export default function ProductPage() {
   const { id } = useLocalSearchParams();
@@ -40,6 +42,7 @@ export default function ProductPage() {
   const images = product.productImg?.map((img) => ({
     uri: img.url,
   }));
+
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
@@ -161,6 +164,7 @@ export default function ProductPage() {
               onRequestClose={() => setIsVisible(false)}
             />
 
+
             <View className="absolute bottom-6 flex-row bg-white/80 p-2 rounded-xl border border-white/40 shadow-xl gap-2">
               {product.productImg?.slice(0, 5).map((img, index) => (
                 <TouchableOpacity
@@ -211,7 +215,7 @@ export default function ProductPage() {
 
       {toastMsg ? (
         <Animated.View style={[styles.toast, { opacity: fadeAnim }]} className="bg-black/90 px-6 py-3 rounded-full">
-          <Text className="text-white font-bold text-xs uppercase tracking-widest">{toastMsg}</Text>
+          <Text className="text-white font-bold text-xs tracking-widest">{toastMsg}</Text>
         </Animated.View>
       ) : null}
 

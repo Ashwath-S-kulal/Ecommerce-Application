@@ -87,28 +87,21 @@ export const deleteProduct = async (req, res) => {
       });
     }
 
-    // 1. Delete images from Cloudinary
     if (product.productImg && product.productImg.length > 0) {
       for (let img of product.productImg) {
         await cloudinary.uploader.destroy(img.public_id);
       }
     }
-
-    // 2. Delete the product itself
     await Product.findByIdAndDelete(productId);
 
-    // 3. CLEANUP: Remove product from all Carts
-    // Finds any cart containing this productId and pulls it from the items array
     await Cart.updateMany(
       { "items.productId": productId },
       { $pull: { items: { productId: productId } } },
     );
 
-    // 4. CLEANUP: Remove product from all Wishlists
-    // Assuming wishlist stores an array of product IDs
     await Wishlist.updateMany(
-      { "items.productId": productId }, // Find wishlists containing this product
-      { $pull: { items: { productId: productId } } }, // Remove the specific object from the items array
+      { "items.productId": productId },
+      { $pull: { items: { productId: productId } } },
     );
 
     return res.status(200).json({
@@ -200,6 +193,36 @@ export const updateProduct = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const searchProducts = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q || q.trim() === "") {
+      return res.status(200).json({ success: true, products: [] });
+    }
+    const products = await Product.find({
+      $or: [
+        { productName: { $regex: q, $options: "i" } },
+        { brand: { $regex: q, $options: "i" } },
+        { category: { $regex: q, $options: "i" } }
+      ]
+    })
+    .select("productName productPrice productImg brand") 
+    .limit(8); 
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error("Search Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during search",
+      error: error.message
     });
   }
 };

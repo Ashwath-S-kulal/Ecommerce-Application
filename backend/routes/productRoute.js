@@ -1,5 +1,5 @@
 import express from 'express';
-import { addProduct, deleteProduct, getAllProduct, updateProduct } from '../controller/productController.js';
+import { addProduct, deleteProduct, getAllProduct, searchProducts, updateProduct } from '../controller/productController.js';
 import { isAdmin, isAuthenticated } from '../middleware/isAuthenticated.js';
 import { multipleUpload } from '../middleware/multer.js';
 
@@ -9,6 +9,6 @@ router.post('/add',isAuthenticated,isAdmin,multipleUpload,addProduct);
 router.get('/getallproducts',getAllProduct);
 router.delete('/delete/:productId',isAuthenticated,isAdmin,deleteProduct)
 router.put('/update/:productId',isAuthenticated,isAdmin,multipleUpload,updateProduct)
-
+router.get("/search", searchProducts);
 
 export default router;

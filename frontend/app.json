@@ -4,7 +4,7 @@
     "slug": "frontend",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "https://pbs.twimg.com/profile_images/2002254328384655360/r5Pbkx0y.jpg",
+    "icon": "./assets/images/logo.jpg",
     "scheme": "frontend",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,24 +14,30 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/logo.jpg",
+        "backgroundImage": "./assets/images/logo.jpg",
+        "monochromeImage": "./assets/images/logo.jpg"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.ashwathskulal.frontend"
+      "package": "com.ashwathskulal.frontend",
+      "permissions": [
+        "android.permission.INTERNET",
+       "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.CAMERA"
+      ],
+      "usesCleartextTraffic": true
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo.jpg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/logo.jpg",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff",
@@ -49,7 +55,8 @@
       "router": {},
       "eas": {
         "projectId": "27a26099-78d1-4de1-9856-eea2bc90c8db"
-      }
+      },
+      "apiUrl": "https://ecommerce-website-gilt-six.vercel.app"
     }
   }
 }

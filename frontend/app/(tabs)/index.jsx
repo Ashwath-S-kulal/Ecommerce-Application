@@ -18,9 +18,10 @@ import {
   MapPin, Leaf, Zap, CheckCircle2 
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Constants from "expo-constants";
 
 const { width } = Dimensions.get('window');
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL; 
+const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
 export default function Home() {
   const dispatch = useDispatch();

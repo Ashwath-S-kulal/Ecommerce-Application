@@ -11,6 +11,7 @@ import { setUser } from "../../redux/userSlice";
 import { Mail, Phone, MapPin, Calendar, Edit2, Trash2, X, Camera, ShieldCheck, Search, Filter } from "lucide-react-native";
 import * as ImagePicker from 'expo-image-picker';
 import { Dropdown } from 'react-native-element-dropdown';
+import Constants from "expo-constants";
 
 const AllUsers = () => {
   const [users, setUsers] = useState([]);
@@ -29,7 +30,7 @@ const AllUsers = () => {
 
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.user.user);
-  const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL
+  const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
   const roleData = [
     { label: 'User', value: 'user' },

@@ -12,9 +12,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Dropdown } from 'react-native-element-dropdown';
+import Constants from "expo-constants";
 
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL
 
+const BASE_URL = Constants.expoConfig.extra.apiUrl;
 const ShowUserOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

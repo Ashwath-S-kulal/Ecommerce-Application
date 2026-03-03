@@ -23,8 +23,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { markSingleRead, setNotifications } from '@/redux/productSlice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FallbackImage from "../../assets/Product Doesnt Exist.webp";
+import Constants from "expo-constants";
 
-const BASE_URI = process.env.EXPO_PUBLIC_BASE_URL
+const BASE_URI = Constants.expoConfig.extra.apiUrl;
+
 
 export default function Notifications() {
     const { notifications } = useSelector((state) => state.product);

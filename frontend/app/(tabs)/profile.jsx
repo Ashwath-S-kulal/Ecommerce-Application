@@ -14,9 +14,11 @@ import { Camera, User, MapPin, Phone, Mail, Save, X, LogOut, Box, Heart, Ticket,
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import Constants from "expo-constants";
 import ImageViewing from "react-native-image-viewing";
 
-const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
+
+const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
 export default function Profile() {
   const { user } = useSelector(store => store.user);
@@ -39,6 +41,7 @@ export default function Profile() {
   });
 
   const [file, setFile] = useState(null);
+
   const [visible, setIsVisible] = useState(false);
 
   const images = updateUser.profilePic
@@ -128,7 +131,7 @@ export default function Profile() {
 
       if (file) {
         formData.append("file", {
-          uri: Platform.OS === 'ios' ? file.uri.replace('file://', '') : file.uri,
+          uri: file.uri,
           name: file.name,
           type: 'image/jpeg',
         });
@@ -235,7 +238,7 @@ export default function Profile() {
               </View>
             </View>
             <View className="gap-y-4 mt-5">
-              <View className="bg-white p-6 rounded-md border border-slate-100 shadow-sm">
+              <View className="bg-white p-6 rounded-md border border-slate-100 shadow-sm mb-5">
                 <View className="flex-row items-center mb-5 border-b border-slate-50 pb-3">
                   <User size={16} color="#94a3b8" />
                   <Text className="ml-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Basic Info</Text>
@@ -328,7 +331,7 @@ export default function Profile() {
                 }}
                 className="absolute bottom-24 self-center bg-black/80 px-6 py-3 rounded-full shadow-lg"
               >
-                <Text className="text-white font-bold text-xs uppercase tracking-widest">{toastMsg}</Text>
+                <Text className="text-white font-bold text-xs tracking-widest">{toastMsg}</Text>
               </Animated.View>
             ) : null}
           </ScrollView>

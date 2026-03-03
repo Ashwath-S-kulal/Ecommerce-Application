@@ -8,19 +8,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import ProductDetail from '../product/[id]';
 import { SafeAreaView } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 
 export default function Wishlist() {
   const { wishlist } = useSelector(store => store.product);
   const dispatch = useDispatch();
   const router = useRouter();
-  
+
   const [loading, setLoading] = useState(true);
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const API = `${process.env.EXPO_PUBLIC_BASE_URL}/api/wishlist`;
-  const CART_API = `${process.env.EXPO_PUBLIC_BASE_URL}/api/cart`;
+  const API = `${Constants.expoConfig.extra.apiUrl}/api/wishlist`;
+  const CART_API = `${Constants.expoConfig.extra.apiUrl}/api/cart`;
 
   useEffect(() => {
     if (toastMsg) {
@@ -29,7 +30,7 @@ export default function Wishlist() {
         Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
         Animated.delay(2000),
         Animated.timing(fadeAnim, { toValue: 0, duration: 400, useNativeDriver: true })
-      ]).start(() => setToastMsg("")); 
+      ]).start(() => setToastMsg(""));
     }
   }, [toastMsg]);
 
@@ -59,10 +60,10 @@ export default function Wishlist() {
       });
       if (res.data.success) {
         dispatch(setWishlist(res.data.wishlist));
-        setToastMsg("REMOVED FROM WISHLIST"); // Trigger custom toast
+        setToastMsg("Removed from Whishlist"); 
       }
     } catch (error) {
-      setToastMsg("FAILED TO REMOVE");
+      setToastMsg("Failed to remove item"); 
     }
   };
 
@@ -74,10 +75,10 @@ export default function Wishlist() {
       });
       if (res.data.success) {
         dispatch(setCart(res.data.cart));
-        setToastMsg("ADDED TO CART"); // Trigger custom toast
+        setToastMsg("Added to cart"); 
       }
     } catch (error) {
-      setToastMsg("FAILED TO ADD TO CART");
+      setToastMsg("Failed to add to cart");
     }
   };
 
@@ -91,6 +92,24 @@ export default function Wishlist() {
     </View>
   );
 
+  if (!wishlist?.items?.length) {
+    return (
+      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
+        <View className="w-20 h-20 bg-rose-50 rounded-full items-center justify-center mb-6">
+          <Heart size={32} color="#fb7185" />
+        </View>
+        <Text className="text-xl font-black text-slate-900 tracking-tight" numberOfLines={1}>Your wishlist is empty</Text>
+        <Text className="text-slate-400 text-center mt-2 mb-8 text-sm">Items you save will appear here for your next aesthetic upgrade!</Text>
+        <TouchableOpacity
+          onPress={() => router.push('/products')}
+          className="bg-black px-8 py-4 rounded-full w-full items-center"
+        >
+          <Text className="text-white font-bold uppercase tracking-widest text-xs">Shop Arrivals</Text>
+        </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView className="flex-1 bg-[#F9FAFB]">
       <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
@@ -103,104 +122,81 @@ export default function Wishlist() {
           </View>
           <Text className="text-gray-400 text-xs mt-1">Saved items for your aesthetic upgrade.</Text>
         </View>
+        <View className="flex-row flex-wrap justify-between px-3 mt-4">
+          {wishlist.items.map((item) => (
+            <View key={item.productId?._id} className="w-[48%] bg-white p-2 rounded-xl mb-4 shadow-sm border border-gray-50">
+              <View className="relative aspect-square bg-gray-50 rounded-md overflow-hidden items-center justify-center p-5">
+                <TouchableOpacity
+                  onPress={() => handleRemove(item.productId?._id)}
+                  className="absolute top-2 right-2 z-20 p-1.5 bg-white/90 rounded-full shadow-sm"
+                >
+                  <X size={18} color="#9CA3AF" />
+                </TouchableOpacity>
 
-        {wishlist?.items?.length > 0 ? (
-          <View className="flex-row flex-wrap justify-between px-3 mt-4">
-            {wishlist.items.map((item) => (
-              <View key={item.productId?._id} className="w-[48%] bg-white p-2 rounded-xl mb-4 shadow-sm border border-gray-50">
-                <View className="relative aspect-square bg-gray-50 rounded-md overflow-hidden items-center justify-center p-5">
-                  <TouchableOpacity 
-                    onPress={() => handleRemove(item.productId?._id)}
-                    className="absolute top-2 right-2 z-20 p-1.5 bg-white/90 rounded-full shadow-sm"
-                  >
-                    <X size={18} color="#9CA3AF" />
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    className="w-full h-full p-3"
-                    onPress={() => router.push(`/product/${item.productId?._id}`)}
-                  >
-                    <Image 
-                      source={{ uri: item.productId?.productImg?.[0]?.url }} 
-                      className="w-full h-full object-contain"
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <View className="mt-2 px-1">
-                  <Text numberOfLines={1} className="text-[13px] font-bold text-gray-800">
-                    {item.productId?.productName}
-                  </Text>
-                  <Text className="text-sm font-black text-gray-900 mt-1">
-                    ₹{item.productId?.productPrice?.toLocaleString()}
-                  </Text>
-                  
-                  <TouchableOpacity 
-                    onPress={() => handleMoveToCart(item.productId?._id)}
-                    className="mt-3 flex-row items-center justify-center bg-gray-900 py-2.5 rounded-md active:opacity-80"
-                  >
-                    <ShoppingCart size={14} color="white" />
-                    <Text className="text-white text-[10px] font-black ml-2  uppercase">
-                      Add to Cart
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <TouchableOpacity
+                  className="w-full h-full p-3"
+                  onPress={() => router.push(`/product/${item.productId?._id}`)}
+                >
+                  <Image
+                    source={{ uri: item.productId?.productImg?.[0]?.url }}
+                    className="w-full h-full object-contain"
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
               </View>
-            ))}
-          </View>
-        ) : (
-          <EmptyState router={router} />
-        )}
+
+              <View className="mt-2 px-1">
+                <Text numberOfLines={1} className="text-[13px] font-bold text-gray-800">
+                  {item.productId?.productName}
+                </Text>
+                <Text className="text-sm font-black text-gray-900 mt-1">
+                  ₹{item.productId?.productPrice?.toLocaleString()}
+                </Text>
+
+                <TouchableOpacity
+                  onPress={() => handleMoveToCart(item.productId?._id)}
+                  className="mt-3 flex-row items-center justify-center bg-gray-900 py-2.5 rounded-md active:opacity-80"
+                >
+                  <ShoppingCart size={14} color="white" />
+                  <Text className="text-white text-[10px] font-black ml-2  uppercase">
+                    Add to Cart
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </View>
       </ScrollView>
 
       {toastMsg ? (
-        <Animated.View 
+        <Animated.View
           pointerEvents="none"
-          style={{ 
-            opacity: fadeAnim, 
-            transform: [{ 
-              translateY: fadeAnim.interpolate({ 
-                inputRange: [0, 1], 
-                outputRange: [20, 0] 
-              }) 
-            }] 
+          style={{
+            opacity: fadeAnim,
+            transform: [{
+              translateY: fadeAnim.interpolate({
+                inputRange: [0, 1],
+                outputRange: [20, 0]
+              })
+            }]
           }}
           className="absolute bottom-10 self-center bg-black/90 px-6 py-3 rounded-full shadow-2xl z-[100]"
         >
-          <Text className="text-white font-bold text-[10px] uppercase tracking-widest">{toastMsg}</Text>
+          <Text className="text-white font-bold text-[10px] tracking-widest">{toastMsg}</Text>
         </Animated.View>
       ) : null}
 
-      <Modal 
-        visible={!!selectedProductId} 
+      <Modal
+        visible={!!selectedProductId}
         animationType="slide"
         presentationStyle="pageSheet"
         onRequestClose={() => setSelectedProductId(null)}
       >
-        <ProductDetail 
-          id={selectedProductId} 
-          onBack={() => setSelectedProductId(null)} 
+        <ProductDetail
+          id={selectedProductId}
+          onBack={() => setSelectedProductId(null)}
         />
       </Modal>
     </SafeAreaView>
   );
 }
-
-const EmptyState = ({ router }) => (
-  <View className="mx-5 mt-20 items-center justify-center bg-white rounded-xl p-10 border border-gray-50 shadow-sm">
-    <View className="w-16 h-16 bg-rose-50 rounded-full items-center justify-center mb-4">
-      <Heart size={28} color="#FB7185" fill="#FFE4E6" />
-    </View>
-    <Text className="text-lg font-bold text-gray-900" numberOfLines={1}>Your wishlist is empty</Text>
-    <Text className="text-gray-400 text-xs text-center mt-2 mb-8">
-      Items you save will appear here for your next aesthetic upgrade!
-    </Text>
-    <TouchableOpacity 
-      onPress={() => router.push('/shop')}
-      className="bg-black px-8 py-4 rounded-full"
-    >
-      <Text className="text-white font-bold text-xs tracking-widest uppercase">Shop Arrivals</Text>
-    </TouchableOpacity>
-  </View>
-);
