@@ -21,7 +21,8 @@ export default function AdminLayout() {
       <Stack.Screen name="AddProducts" />
       <Stack.Screen name="Orders" />
       <Stack.Screen name="Users" />
-      <Stack.Screen name="order/[orderId]" />
+      <Stack.Screen name="order" />
+      <Stack.Screen name="OrdersDetails" />
     </Stack>
   );
 }

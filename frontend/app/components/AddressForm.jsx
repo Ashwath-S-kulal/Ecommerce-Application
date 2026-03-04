@@ -54,10 +54,11 @@ export default function AddressForm({ navigation }) {
   const dispatch = useDispatch();
   const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
-  const subtotal = cart?.totalPrice || 0;
-  const shipping = subtotal > 5000 ? 0 : 50;
+  const subTotal = cart?.totalPrice || 0;
+  const freeShippingThreshold = 5000;
+  const shipping = subTotal > freeShippingThreshold || subTotal === 0 ? 0 : 50;
+  const total = subTotal + shipping;
   const tax = 0;
-  const total = subtotal + shipping;
 
   const showToast = (text) => {
     setToastMsg(text);
@@ -208,12 +209,14 @@ export default function AddressForm({ navigation }) {
     }
   };
 
-  if (fetching) return (
-    <View className="flex-1 justify-center items-center bg-[#f8fafc]">
-      <ActivityIndicator size="large" color="#ec4899" />
-      <Text className="mt-[10px] text-[#64748b]">Loading addresses...</Text>
-    </View>
-  );
+  if (fetching) {
+    return (
+      <View className="flex-1 justify-center items-center bg-[#f8fafc]">
+        <ActivityIndicator size="large" color="black" />
+        <Text className="mt-[10px] text-[#64748b]">Loading addresses...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-[#f8fafc]">
@@ -225,7 +228,6 @@ export default function AddressForm({ navigation }) {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView contentContainerStyle={{ padding: 20 }}>
 
-            {/* Header */}
             <View className="mb-6 items-center">
               <Text className="text-2xl font-[900] text-[#0f172a]" numberOfLines={1}>
                 Checkout <Text className="text-[#ec4899] italic font-serif">Process</Text>
@@ -233,17 +235,21 @@ export default function AddressForm({ navigation }) {
               <Text className="text-[12px] text-[#64748b] mt-1">Complete your order by providing delivery details</Text>
             </View>
 
-            {/* Order Summary Card */}
             <View className="bg-white rounded-xl overflow-hidden border border-[#e2e8f0] mb-5">
               <View className="bg-[#f8fafc] p-4 border-b border-[#f1f5f9]">
                 <Text className="text-[12px] font-[900] text-[#64748b] tracking-[1px]">ORDER SUMMARY</Text>
               </View>
               <View className="p-5">
-                <SummaryRow label="Subtotal" value={`₹${subtotal.toLocaleString()}`} />
+                <SummaryRow label="Subtotal" value={`₹${subTotal.toLocaleString()}`} />
                 <SummaryRow
                   label="Shipping Fee"
                   value={shipping === 0 ? "FREE" : `₹${shipping}`}
                   valueStyle={shipping === 0 ? "text-[#10b981]" : "text-[#0f172a]"}
+                />
+                <SummaryRow
+                  label="Tax"
+                  value={`₹${tax.toLocaleString()}`}
+                  valueStyle="text-[#0f172a]"
                 />
                 <View className="h-[1px] bg-[#f1f5f9] my-3" />
                 <View className="flex-row justify-between items-center">
@@ -253,7 +259,6 @@ export default function AddressForm({ navigation }) {
               </View>
             </View>
 
-            {/* Address Logic Section */}
             <View>
               {showForm ? (
                 <View className="bg-white p-5 rounded-[24px] border border-[#e2e8f0]">
@@ -309,8 +314,8 @@ export default function AddressForm({ navigation }) {
                         key={addr._id}
                         onPress={() => dispatch(setSelectedAddress(addr._id))}
                         className={`p-[15px] rounded-xl border-2 mb-4 ${selectedAddress === addr._id
-                            ? "border-[#ec4899] bg-[#fff1f2]"
-                            : "border-[#f1f5f9] bg-white"
+                          ? "border-[#ec4899] bg-[#fff1f2]"
+                          : "border-[#f1f5f9] bg-white"
                           }`}
                       >
                         <View className="flex-row items-start">
@@ -369,7 +374,6 @@ export default function AddressForm({ navigation }) {
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
 
-      {/* Confirmation Modal */}
       <Modal visible={isConfirmOpen} transparent animationType="fade">
         <View className="flex-1 bg-black/50 justify-center items-center">
           <View className="w-[90%] bg-white rounded-2xl p-[25px] items-center">
@@ -403,7 +407,6 @@ export default function AddressForm({ navigation }) {
         </View>
       </Modal>
 
-      {/* Toast Notification */}
       {toastMsg ? (
         <Animated.View
           style={{
@@ -419,7 +422,6 @@ export default function AddressForm({ navigation }) {
   );
 }
 
-// Sub-components utilizing Tailwind
 const SummaryRow = ({ label, value, valueStyle = "text-[#0f172a]" }) => (
   <View className="flex-row justify-between mb-3">
     <Text className="text-[#475569] text-[14px]">{label}</Text>
@@ -437,3 +439,4 @@ const CustomInput = ({ label, ...props }) => (
     />
   </View>
 );
+

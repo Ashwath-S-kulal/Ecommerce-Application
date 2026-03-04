@@ -13,7 +13,89 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
+import FallbackImage from '../../../assets/Product Doesnt Exist.webp';
+import { useRef } from 'react';
+import { Animated } from 'react-native';
 
+const Skeleton = ({ className }) => {
+    const opacity = useRef(new Animated.Value(0.3)).current;
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(opacity, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+                Animated.timing(opacity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+            ])
+        ).start();
+    }, []);
+    return <Animated.View style={{ opacity }} className={`bg-slate-200 rounded-md ${className}`} />;
+};
+
+const DetailsSkeleton = () => (
+    <SafeAreaView className="flex-1 bg-[#FBFBFE]">
+        <ScrollView contentContainerStyle={{ padding: 24 }}>
+            {/* Back Button & Header */}
+            <View className="mb-8">
+                <Skeleton className="h-4 w-16 mb-6" />
+                <View className="flex-row justify-between items-center">
+                    <Skeleton className="h-10 w-64" />
+                    <Skeleton className="h-8 w-20 rounded-2xl" />
+                </View>
+            </View>
+
+            {/* Shipment Contents Card */}
+            <View className="bg-white rounded-md border border-slate-100 p-6 mb-6">
+                <View className="flex-row justify-between mb-6">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-4 w-12" />
+                </View>
+                {[1, 2].map((i) => (
+                    <View key={i} className="flex-row items-center mb-6">
+                        <Skeleton className="w-20 h-20 rounded-2xl" />
+                        <View className="flex-1 ml-4 gap-y-2">
+                            <Skeleton className="h-2 w-12" />
+                            <Skeleton className="h-5 w-32" />
+                            <Skeleton className="h-3 w-16" />
+                        </View>
+                        <View className="items-end gap-y-2">
+                            <Skeleton className="h-5 w-16" />
+                            <Skeleton className="h-3 w-10" />
+                        </View>
+                    </View>
+                ))}
+            </View>
+
+            {/* Price Breakdown Card */}
+            <View className="bg-white rounded-md border border-slate-100 p-6 mb-6">
+                <Skeleton className="h-4 w-24 mb-6" />
+                <View className="gap-y-4 mb-4">
+                    <View className="flex-row justify-between"><Skeleton className="h-4 w-16" /><Skeleton className="h-4 w-12" /></View>
+                    <View className="flex-row justify-between"><Skeleton className="h-4 w-16" /><Skeleton className="h-4 w-12" /></View>
+                </View>
+                <Skeleton className="h-24 w-full rounded-2xl" />
+            </View>
+
+            {/* Status Timeline Skeleton */}
+            <View className="bg-white rounded-md border border-slate-100 p-8 mb-6">
+                <Skeleton className="h-4 w-40 mb-10" />
+                {[1, 2, 3].map((i) => (
+                    <View key={i} className="flex-row pb-10">
+                        <View className="items-center mr-6">
+                            <Skeleton className="w-6 h-6 rounded-full" />
+                            <Skeleton className="w-[2px] h-20" />
+                        </View>
+                        <View className="flex-1 flex-row justify-between">
+                            <View className="gap-y-2">
+                                <Skeleton className="h-6 w-32" />
+                                <Skeleton className="h-3 w-40" />
+                            </View>
+                            <Skeleton className="h-10 w-24 rounded-xl" />
+                        </View>
+                    </View>
+                ))}
+            </View>
+        </ScrollView>
+    </SafeAreaView>
+);
 
 const BASE_URI = Constants.expoConfig.extra.apiUrl;
 
@@ -26,6 +108,20 @@ export default function OrderDetailsPage() {
     const [refreshing, setRefreshing] = useState(false);
     const [isMounted, setIsMounted] = useState(true);
     const statuses = ["Pending", "Confirmed", "Shipped", "Delivered"];
+
+
+
+    useEffect(() => {
+        if (orderId)
+            fetchOrderDetails();
+    }, [orderId]);
+
+
+    useEffect(() => {
+        setIsMounted(true);
+        return () => setIsMounted(false);
+    }, []);
+
 
     const fetchOrderDetails = async () => {
         try {
@@ -42,13 +138,6 @@ export default function OrderDetailsPage() {
         }
     };
 
-    useEffect(() => { if (orderId) fetchOrderDetails(); }, [orderId]);
-
-
-    useEffect(() => {
-        setIsMounted(true);
-        return () => setIsMounted(false);
-    }, []);
 
     const handleUpdateStatus = async (newStatus) => {
         if (updating || !isMounted) return;
@@ -73,18 +162,8 @@ export default function OrderDetailsPage() {
                                 { headers: { Authorization: `Bearer ${accessToken}` } }
                             );
 
-                            if (response.data.success && isMounted) {
-                                Alert.alert(
-                                    "Success",
-                                    `Order is now ${newStatus}`,
-                                    [
-                                        {
-                                            text: "Done",
-                                            onPress: () => router.push("/(admin)/Orders")
-                                        }
-                                    ]
-                                );
-                            }
+                            fetchOrderDetails();
+
                         } catch (err) {
                             console.error("Update failed:", err);
                             if (isMounted) Alert.alert("Error", "Update failed. Please try again.");
@@ -97,11 +176,7 @@ export default function OrderDetailsPage() {
         );
     };
 
-    if (loading) return (
-        <View className="flex-1 justify-center items-center bg-[#FBFBFE]">
-            <ActivityIndicator size="large" color="#ec4899" />
-        </View>
-    );
+    if (loading) return <DetailsSkeleton />;
 
     if (!order) return (
         <View className="flex-1 justify-center items-center">
@@ -151,14 +226,28 @@ export default function OrderDetailsPage() {
                     <View className="gap-y-6">
                         {order.products.map((item, idx) => (
                             <View key={idx} className="flex-row items-center">
-                                <TouchableOpacity onPress={() => router.push(`/product/${item?.productId._id}`)}>
+                                <TouchableOpacity
+                                    onPress={() => {
+                                        if (item?.productId?._id) {
+                                            router.push(`/product/${item.productId._id}`);
+                                        } else {
+                                            Alert.alert(
+                                                "Product Not Available",
+                                                "This product no longer exists."
+                                            );
+                                        }
+                                    }}
+                                >
                                     <Image
-                                        source={{ uri: item.productId?.productImg?.[0]?.url }}
+                                        source={
+                                            item?.productId?.productImg?.[0]?.url
+                                                ? { uri: item.productId.productImg[0].url }
+                                                : FallbackImage
+                                        }
                                         className="w-20 h-20 rounded-2xl bg-slate-100"
                                         resizeMode="cover"
                                     />
                                 </TouchableOpacity>
-
                                 <View className="flex-1 ml-4">
                                     <Text className="text-pink-500 text-[8px] font-black uppercase tracking-widest mb-1">{item.productId?.category}</Text>
                                     <Text className="text-slate-900 font-black italic text-base" >{item.productId?.productName}</Text>
@@ -229,76 +318,89 @@ export default function OrderDetailsPage() {
                     </View>
                 </View>
 
-                <View className="bg-white rounded-md border border-slate-100 p-8 mb-6 shadow-sm">
-                    <View className="flex-row items-center mb-10">
-                        <Truck size={18} color="#ec4899" />
-                        <Text className="ml-2 font-black uppercase text-xs tracking-widest text-slate-400">Live Progress Manifest</Text>
+                <View className="bg-white rounded-md border border-slate-100 p-7 mb-6 shadow-sm overflow-hidden">
+                    <View className="flex-row items-center justify-between mb-8">
+                        <View className="flex-row items-center">
+                            <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 animate-pulse" />
+                            <Text className="font-black uppercase text-[10px] tracking-widest text-slate-400">
+                                Logistics Stepper
+                            </Text>
+                        </View>
                     </View>
 
-                    {statuses.map((step, index) => {
-                        const currentIdx = statuses.indexOf(order.status);
-                        const isCompleted = currentIdx >= index && order.status !== "Cancelled";
-                        const isActive = order.status === step;
-                        const isLineCompleted = currentIdx > index && order.status !== "Cancelled";
+                    <View className="relative">
+                        <View className="absolute left-[12px] top-2 bottom-2 w-[2px] bg-slate-100" />
 
-                        return (
-                            <View key={step} className="flex-row pb-10 last:pb-0">
-                                <View className="items-center mr-6">
-                                    <View className={`w-6 h-6 rounded-full border-4 items-center justify-center ${isCompleted ? 'bg-emerald-500 border-emerald-100 scale-110' : 'bg-white border-slate-100'
-                                        }`}>
-                                        {isCompleted && <CheckCircle2 size={10} color="white" />}
-                                    </View>
+                        <View
+                            style={{
+                                height: `${(statuses.indexOf(order.status) / (statuses.length - 1)) * 100}%`,
+                                maxHeight: '100%'
+                            }}
+                            className="absolute left-[12px] top-0 w-[2px] bg-emerald-500 z-10 "
+                        />
 
-                                    {index !== statuses.length - 1 && (
-                                        <View className={`w-[2px] h-20 ${isLineCompleted ? 'bg-emerald-500' : 'bg-slate-100'
-                                            }`} />
-                                    )}
-                                </View>
+                        <View className="gap-y-8">
+                            {statuses.map((step, index) => {
+                                const isActive = order.status === step;
+                                const isPast = statuses.indexOf(order.status) > index;
 
-                                <View className="flex-1 -mt-1">
-                                    <View className="flex-row justify-between items-start">
-                                        <View className="flex-1 mr-4">
-                                            <Text className={`font-black uppercase italic text-xl tracking-tighter ${isCompleted ? 'text-slate-900' : 'text-slate-200'
+                                return (
+                                    <View key={step} className="flex-row items-center">
+                                        <View className="z-20">
+                                            <View className={`w-7 h-7 rounded-full items-center justify-center border-2 ${isActive
+                                                ? 'bg-slate-900 border-slate-900'
+                                                : isPast
+                                                    ? 'bg-emerald-500 border-emerald-500'
+                                                    : 'bg-white border-slate-200'
+                                                }`}>
+                                                {isPast ? (
+                                                    <CheckCircle2 size={12} color="white" />
+                                                ) : (
+                                                    <View className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white' : 'bg-slate-200'}`} />
+                                                )}
+                                            </View>
+                                        </View>
+
+                                        <View className="ml-4 flex-1">
+                                            <Text className={`font-black uppercase text-[11px] tracking-widest ${isActive ? 'text-slate-900' : isPast ? 'text-emerald-600' : 'text-slate-300'
                                                 }`}>
                                                 {step}
-                                            </Text>
-                                            <Text className={`text-[10px] font-bold mt-1 ${isCompleted ? 'text-slate-400' : 'text-slate-200'
-                                                }`}>
-                                                {isActive ? "Currently in this phase." : isCompleted ? "Phase logistics completed." : "Pending logistics."}
                                             </Text>
                                         </View>
 
                                         <TouchableOpacity
                                             onPress={() => handleUpdateStatus(step)}
-                                            disabled={updating || isActive}
-                                            className={`px-4 py-2 w-24 items-center rounded-xl border-2 ${isActive
-                                                ? 'bg-slate-100 border-slate-200'
-                                                : 'bg-white border-slate-900 shadow-[4px_4px_0px_0px_rgba(15,23,42,1)] active:shadow-none'
+                                            disabled={!!updating || isActive}
+                                            className={`px-4 py-2 rounded-md border flex-row items-center justify-center min-w-[85px] ${isActive
+                                                    ? 'bg-slate-50 border-slate-100'
+                                                    : 'bg-white border-slate-900'
                                                 }`}
                                         >
-                                            <Text className={`text-[9px] font-black uppercase ${isActive ? 'text-slate-400' : 'text-slate-900'}`}>
-                                                {isActive ? "ACTIVE" : `SET ${step.toUpperCase()}`}
-                                            </Text>
+                                            {updating === step ? (
+                                                <ActivityIndicator size="small" color="#0f172a" />
+                                            ) : (
+                                                <Text className={`text-[9px] font-black uppercase tracking-tighter ${isActive ? 'text-slate-400' : 'text-slate-900'
+                                                    }`}>
+                                                    {isActive ? 'Active' : `Set ${step}`}
+                                                </Text>
+                                            )}
                                         </TouchableOpacity>
                                     </View>
-                                </View>
-                            </View>
-                        );
-                    })}
+                                );
+                            })}
+                        </View>
+                    </View>
                 </View>
 
-                <View className="bg-red-50/50 rounded-[32px] p-8 mb-12 border-2 border-dashed border-red-200">
-                    <View className="flex-row items-center mb-6">
-                        <AlertTriangle size={18} color="#ef4444" />
-                        <Text className="ml-2 text-red-600 font-black uppercase text-[10px] tracking-widest italic">Abort Logistics</Text>
-                    </View>
+
+                <View className="bg-red-50/50 rounded-full p-8 mb-12 border-2 border-dashed border-red-200">
                     <TouchableOpacity
-                        disabled={updating || order.status === "Cancelled"}
+                        disabled={updating || order.status === "Cancelled" || order.status === "Delivered"}
                         onPress={() => handleUpdateStatus("Cancelled")}
-                        className={`flex-row items-center justify-center py-5 rounded-2xl ${order.status === "Cancelled" ? 'bg-slate-100' : 'bg-red-600 shadow-[6px_6px_0px_0px_rgba(153,27,27,1)] active:shadow-none'}`}
+                        className={`flex-row items-center justify-center py-5 rounded-full ${order.status === "Cancelled" || order.status === "Delivered" ? 'bg-slate-100' : 'bg-red-600 shadow-[6px_6px_0px_0px_rgba(153,27,27,1)] active:shadow-none'}`}
                     >
-                        <XCircle size={20} color={order.status === "Cancelled" ? "#94a3b8" : "white"} />
-                        <Text numberOfLines={1} className={`ml-3 font-black uppercase text-sm tracking-widest ${order.status === "Cancelled" ? 'text-slate-400' : 'text-white'}`}>
+                        <XCircle size={20} color={order.status === "Cancelled" || order.status === "Delivered" ? "#94a3b8" : "white"} />
+                        <Text numberOfLines={1} className={`ml-3 font-black uppercase text-sm tracking-widest ${order.status === "Cancelled" || order.status === "Delivered" ? 'text-slate-400' : 'text-white'}`}>
                             Cancel Order
                         </Text>
                     </TouchableOpacity>
@@ -307,3 +409,4 @@ export default function OrderDetailsPage() {
         </SafeAreaView>
     );
 }
+

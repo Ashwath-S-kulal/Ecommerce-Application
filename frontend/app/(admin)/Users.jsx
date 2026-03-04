@@ -174,7 +174,42 @@ const AllUsers = () => {
     );
   };
 
-  if (loading) return <View className="flex-1 justify-center items-center"><ActivityIndicator size="large" color="#4f46e5" /></View>;
+  if (loading) {
+    return (
+      <View className="flex-1 bg-[#f8fafc] pt-12">
+        <View className="px-6 mb-4 flex-row justify-between items-end">
+          <View className="flex-1">
+            <View className="h-10 w-40 bg-slate-200 rounded-md animate-pulse mb-2" />
+            <View className="h-4 w-60 bg-slate-100 rounded-md animate-pulse" />
+          </View>
+          <View className="bg-white px-5 py-2 rounded-xl border border-slate-200 shadow-sm flex-row items-center gap-2">
+            <View className="h-3 w-16 bg-slate-100 rounded animate-pulse" />
+            <View className="h-8 w-8 bg-slate-200 rounded-lg animate-pulse" />
+          </View>
+        </View>
+
+        <View className="px-4 mb-4">
+          <View className="bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm mb-3 flex-row items-center">
+            <View className="h-5 w-5 bg-slate-100 rounded-full mr-3" />
+            <View className="h-4 flex-1 bg-slate-50 rounded-md" />
+          </View>
+
+          <View className="flex-row gap-x-2">
+            {[1, 2, 3].map((i) => (
+              <View key={i} className="px-4 py-2 rounded-md w-20 border border-slate-200 bg-white items-center">
+                <View className="h-3 w-10 bg-slate-100 rounded animate-pulse" />
+              </View>
+            ))}
+          </View>
+        </View>
+        <ScrollView showsVerticalScrollIndicator={false}>
+          {[1, 2, 3, 4, 5, 6].map((key) => (
+            <SkeletonUser key={key} />
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#f8fafc] pt-12">
@@ -189,13 +224,13 @@ const AllUsers = () => {
         </View>
       </View>
 
-      {/* --- SEARCH & FILTERS SECTION --- */}
       <View className="px-4 mb-4">
         <View className="flex-row items-center bg-white border border-slate-200 rounded-2xl px-4 py-1 shadow-sm mb-3">
-          <Search size={18} color="#94a3b8" />
+          <Search size={18} color="#64748b" />
           <TextInput
             placeholder="Search by name or email..."
             className="flex-1 h-10 ml-2 font-medium text-slate-700"
+             placeholderTextColor="#94a3b8"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -291,7 +326,7 @@ const AllUsers = () => {
               </View>
 
               <Text className="text-[10px] font-bold text-slate-400 mb-1 ml-1 uppercase">Email Address</Text>
-              <TextInput className="bg-slate-50 p-4 rounded-2xl border border-slate-100 font-semibold mb-4" value={updateUser.email} onChangeText={(v) => handleChange('email', v)} />
+              <TextInput editable={false} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 font-semibold text-slate-400 mb-4" value={updateUser.email} onChangeText={(v) => handleChange('email', v)} />
 
               <View className="flex-row gap-x-3 mb-4">
                 <View className="flex-1">
@@ -353,3 +388,16 @@ const styles = StyleSheet.create({
 });
 
 export default AllUsers;
+
+const SkeletonUser = () => (
+  <View className="bg-white mx-4 mb-3 p-4 rounded-md border border-slate-100 shadow-sm opacity-50">
+    <View className="flex-row items-center">
+      <View className="h-14 w-14 rounded-full bg-slate-200 animate-pulse" />
+      <View className="ml-4 flex-1 gap-y-2">
+        <View className="h-4 w-32 bg-slate-200 rounded animate-pulse" />
+        <View className="h-3 w-48 bg-slate-100 rounded animate-pulse" />
+      </View>
+      <View className="h-10 w-20 bg-slate-100 rounded-md animate-pulse" />
+    </View>
+  </View>
+);

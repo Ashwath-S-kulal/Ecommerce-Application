@@ -156,16 +156,54 @@ export default function Shop() {
   });
 
   const paginatedProducts = filteredProducts.slice(0, visibleItems);
+  
+  const ProductSkeleton = () => (
+  <View style={{ width: width * 0.45 }} className="bg-white rounded-md mb-5 p-2 border border-gray-50">
+    <View className="bg-gray-200 h-40 rounded-xl animate-pulse" />
+    <View className="p-2">
+      <View className="h-3 w-12 bg-gray-200 rounded-md mb-2 animate-pulse" />
+      <View className="h-4 w-full bg-gray-200 rounded-md mb-2 animate-pulse" />
+      <View className="h-6 w-20 bg-gray-100 rounded-md mb-3 animate-pulse" />
+      <View className="h-10 w-full bg-gray-100 rounded-md animate-pulse" />
+    </View>
+  </View>
+);
+
+
+if (loading) {
+  return (
+    <SafeAreaView className="flex-1 bg-[#F8F9FA]">
+      <View className="px-6 py-3 bg-white border-b border-gray-100">
+        <View className="flex-row items-center gap-3">
+          <View className="flex-1 bg-gray-100 h-12 rounded-xl flex-row items-center px-4">
+            <View className="w-5 h-5 bg-gray-200 rounded-full" />
+            <View className="ml-3 h-4 w-32 bg-gray-200 rounded-md" />
+          </View>
+          
+          <View className="w-24 h-12 bg-gray-100 rounded-xl" />
+        </View>
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
+        <View className="flex-row flex-wrap justify-between">
+          {[1, 2, 3, 4, 5, 6].map((key) => (
+            <ProductSkeleton key={key} />
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8F9FA]">
       <View className="px-6 py-3 bg-white border-b border-gray-100 z-50">
         <View className="flex-row items-center gap-3">
           <View className="flex-1 bg-gray-100 flex-row items-center px-4 rounded-xl">
-            <Feather name="search" size={18} color="#9ca3af" />
+            <Feather name="search" size={18} color="#64748b" />
             <TextInput
               placeholder="Search products..."
               className="flex-1 h-12 ml-2 font-semibold text-gray-800"
+               placeholderTextColor="#94a3b8"
               value={search}
               onChangeText={handleSearchChange}
               onFocus={() => search.length > 1 && setShowSuggestions(true)}

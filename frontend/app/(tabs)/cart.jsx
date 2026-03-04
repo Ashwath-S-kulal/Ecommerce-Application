@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Trash2, Minus, Plus, ArrowLeft, Truck, ShoppingCart, ChevronRight } from 'lucide-react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { setCart } from '../../redux/productSlice'; 
+import { setCart } from '../../redux/productSlice';
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 
@@ -16,6 +16,7 @@ export default function Cart() {
   const freeShippingThreshold = 5000;
   const shipping = subTotal > freeShippingThreshold || subTotal === 0 ? 0 : 50;
   const total = subTotal + shipping;
+  const tax = 0;
   const dispatch = useDispatch();
   const router = useRouter();
 
@@ -23,9 +24,9 @@ export default function Cart() {
 
   const API = `${Constants.expoConfig.extra.apiUrl}/api/cart`;
 
-console.log("BASE URL:", process.env.EXPO_PUBLIC_BASE_URL);
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [loading, setLoading] = useState(true);
 
 
   const showToast = (text) => {
@@ -43,11 +44,14 @@ console.log("BASE URL:", process.env.EXPO_PUBLIC_BASE_URL);
       const res = await axios.get(`${API}/`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
+
       if (res.data.success) {
         dispatch(setCart(res.data.cart));
       }
     } catch (error) {
       console.log("Cart load error:", error);
+    } finally {
+      setLoading(false); // ✅ important
     }
   };
 
@@ -98,11 +102,67 @@ console.log("BASE URL:", process.env.EXPO_PUBLIC_BASE_URL);
         <Text className="text-xl font-black text-slate-900 tracking-tight" numberOfLines={1}>Your cart is empty</Text>
         <Text className="text-slate-400 text-center mt-2 mb-8 text-sm">Looks like you have not added anything yet.</Text>
         <TouchableOpacity
-          onPress={() => router.push('/products')}
+          onPress={() => router.push('/(tabs)/shop')}
           className="bg-black px-8 py-4 rounded-full w-full items-center"
         >
           <Text className="text-white font-bold uppercase tracking-widest text-xs">Start Shopping</Text>
         </TouchableOpacity>
+      </SafeAreaView>
+    );
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#f8f9fa] px-6 pt-6">
+        <View className="h-8 w-32 bg-slate-200 rounded-md mb-6" />
+        <View className="bg-white p-4 rounded-md mb-4">
+          <View className="h-3 w-40 bg-slate-200 rounded mb-3" />
+          <View className="h-2 w-full bg-slate-200 rounded-full" />
+        </View>
+
+        {[1, 2].map((_, index) => (
+          <View key={index} className="bg-white rounded-md p-3 mb-3 flex-row">
+            <View className="bg-white rounded-md p-3 mb-3 flex-row items-center border border-gray-50">
+              <View className="w-20 h-24 rounded-xl bg-gray-100 opacity-50" />
+              <View className="flex-1 ml-4">
+                <View className="flex-row justify-between mb-2">
+                  <View className="h-4 w-32 bg-gray-200 rounded-md" />
+                  <View className="h-4 w-16 bg-gray-200 rounded-md" />
+                </View>
+                <View className="h-3 w-20 bg-gray-100 rounded-md mb-4" />
+                <View className="flex-row justify-between items-center">
+                  <View className="h-8 w-24 bg-gray-50 rounded-lg" />
+                  <View className="h-8 w-20 bg-gray-50 rounded-lg" />
+                </View>
+              </View>
+            </View>
+          </View>
+        ))}
+
+        <View className="mt-4 bg-white rounded-md p-6 shadow-sm">
+          <View className="h-3 w-20 bg-slate-200 rounded mb-6" />
+          <View className="flex-row justify-between mb-4">
+            <View className="h-3 w-16 bg-slate-200 rounded" />
+            <View className="h-3 w-20 bg-slate-200 rounded" />
+          </View>
+          <View className="flex-row justify-between mb-4">
+            <View className="h-3 w-16 bg-slate-200 rounded" />
+            <View className="h-3 w-16 bg-slate-200 rounded" />
+          </View>
+          <View className="h-[1px] bg-slate-100 w-full my-3" />
+          <View className="flex-row justify-between items-center mb-6">
+            <View className="h-3 w-14 bg-slate-200 rounded" />
+            <View className="h-6 w-24 bg-slate-200 rounded" />
+          </View>
+          <View className="flex-row items-center bg-slate-50 p-4 rounded-md border border-slate-100 mb-6">
+            <View className="w-8 h-8 bg-slate-200 rounded-lg" />
+            <View className="ml-3 flex-1">
+              <View className="h-3 w-28 bg-slate-200 rounded mb-2" />
+              <View className="h-2 w-36 bg-slate-200 rounded" />
+            </View>
+          </View>
+          <View className="h-16 bg-slate-200 rounded-full" />
+        </View>
       </SafeAreaView>
     );
   }
@@ -188,6 +248,10 @@ console.log("BASE URL:", process.env.EXPO_PUBLIC_BASE_URL);
               <Text className={`font-bold text-xs ${shipping === 0 ? "text-green-500" : "text-slate-900"}`}>
                 {shipping === 0 ? "FREE" : `₹${shipping}`}
               </Text>
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-slate-500 text-xs">Tax</Text>
+              <Text className="font-bold text-slate-900 text-xs">₹{tax.toLocaleString()}</Text>
             </View>
             <View className="h-[1px] bg-slate-100 w-full my-2" />
             <View className="flex-row justify-between items-center">

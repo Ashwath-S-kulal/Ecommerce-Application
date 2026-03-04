@@ -165,7 +165,7 @@ export default function ProductPage() {
             />
 
 
-            <View className="absolute bottom-6 flex-row bg-white/80 p-2 rounded-xl border border-white/40 shadow-xl gap-2">
+            <View className="absolute bottom-2 flex-row bg-white/80 p-2 rounded-xl border border-white/40 shadow-xl gap-2 ">
               {product.productImg?.slice(0, 5).map((img, index) => (
                 <TouchableOpacity
                   key={index}

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  Image, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  TouchableOpacity,
   Dimensions,
   StatusBar
 } from 'react-native';
@@ -13,9 +13,9 @@ import axios from 'axios';
 import { useRouter, usePathname } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setCart, setNotifications, setWishlist } from '@/redux/productSlice';
-import { 
+import {
   ShieldCheck, Truck, Users, Heart, Bell,
-  MapPin, Leaf, Zap, CheckCircle2 
+  MapPin, Leaf, Zap, CheckCircle2
 } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from "expo-constants";
@@ -27,9 +27,9 @@ export default function Home() {
   const dispatch = useDispatch();
   const router = useRouter();
   const pathname = usePathname();
-    const { user } = useSelector((store) => store.user);
-    const { unreadCount } = useSelector((store) => store.product);
-  
+  const { user } = useSelector((store) => store.user);
+  const { unreadCount } = useSelector((store) => store.product);
+
   const isAdmin = user?.role === 'admin';
   const isActive = pathname === '/notifications';
 
@@ -45,12 +45,20 @@ export default function Home() {
           axios.get(`${BASE_URL}/api/wishlist/get`, { headers })
         ];
         if (isAdmin) {
-          requests.push(axios.get(`${BASE_URL}/api/notification/get`, { headers }));
+          requests.push(
+            axios.get(`${BASE_URL}/api/notification/get`, {
+              headers,
+              params: {
+                page: 1,
+                limit: 15
+              }
+            })
+          );
         }
         const responses = await Promise.all(requests);
         if (responses[0]?.data?.success) dispatch(setCart(responses[0].data.cart));
         if (responses[1]?.data?.success) dispatch(setWishlist(responses[1].data.wishlist));
-                if (isAdmin && responses[2]?.data?.success) {
+        if (isAdmin && responses[2]?.data?.success) {
           dispatch(setNotifications(responses[2].data.notifications));
         }
       } catch (err) {
@@ -76,18 +84,17 @@ export default function Home() {
         </View>
 
         {isAdmin && (
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => router.push("../components/Notification")}
-            className={`w-12 h-12 rounded-2xl items-center justify-center border transition-all ${
-              isActive ? "border-slate-900 bg-zinc-50" : "border-zinc-100 bg-white"
-            } shadow-sm relative`}
+            className={`w-12 h-12 rounded-2xl items-center justify-center border transition-all ${isActive ? "border-slate-900 bg-zinc-50" : "border-zinc-100 bg-white"
+              } shadow-sm relative`}
           >
-            <Bell 
-              size={20} 
-              color={unreadCount > 0 ? "#2563eb" : "#0f172a"} 
-              strokeWidth={2.5} 
+            <Bell
+              size={20}
+              color={unreadCount > 0 ? "#2563eb" : "#0f172a"}
+              strokeWidth={2.5}
             />
-            
+
             {unreadCount > 0 && (
               <View className="absolute -top-1 -right-1 min-w-[18px] h-[18px] bg-blue-600 rounded-full border-2 border-white items-center justify-center px-1">
                 <Text className="text-white text-[9px] font-black leading-none">
@@ -100,24 +107,24 @@ export default function Home() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                <View className="px-6 pt-10 pb-10">
+        <View className="px-6 pt-10 pb-10">
           <View className="flex-row items-center mb-4">
-           
+
             <View className="h-[1px] w-8 bg-pink-600 mr-2" />
             <Text className="text-[10px] font-black tracking-[0.2em] text-pink-600 uppercase">
               Impact Platform
             </Text>
           </View>
-          
+
           <Text className="text-4xl font-black tracking-tighter leading-tight text-slate-900">
             Every Purchase{"\n"}
             <Text className="italic font-serif text-pink-600">Ignites a Life.</Text>
           </Text>
-          
+
           <View className="flex-row gap-3 mt-10 h-[350px]">
             <View className="flex-1 rounded-[30px] overflow-hidden border-4 border-white shadow-lg">
-              <Image 
-                source={{ uri: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800' }} 
+              <Image
+                source={{ uri: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?q=80&w=800' }}
                 className="w-full h-full"
                 resizeMode="cover"
               />
@@ -128,8 +135,8 @@ export default function Home() {
                 <Text className="text-white font-bold text-lg leading-tight">Avarse heritage in every stitch</Text>
               </View>
               <View className="flex-1 rounded-[30px] overflow-hidden border-4 border-white shadow-lg">
-                <Image 
-                  source={{ uri: 'https://images.unsplash.com/photo-1590650153855-d9e808231d41?q=80&w=800' }} 
+                <Image
+                  source={{ uri: 'https://images.unsplash.com/photo-1590650153855-d9e808231d41?q=80&w=800' }}
                   className="w-full h-full"
                 />
               </View>

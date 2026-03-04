@@ -30,6 +30,7 @@ const AdminDashboard = () => {
 
   const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
+
   const fetchDashboardData = async () => {
     try {
       const accessToken = await AsyncStorage.getItem("accessToken");
@@ -66,6 +67,8 @@ const AdminDashboard = () => {
     }
   };
 
+
+
   const processAllAnalytics = (orders) => {
     const now = new Date();
     const safeOrders = Array.isArray(orders) ? orders : [];
@@ -93,6 +96,8 @@ const AdminDashboard = () => {
       }
     });
     setWeeklyData({ labels: wLabels, datasets: [{ data: wData }] });
+
+
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     let mLabels = [];
@@ -123,14 +128,27 @@ const AdminDashboard = () => {
     setYearlyData({ labels: yLabels, datasets: [{ data: yData }] });
   };
 
+
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchDashboardData();
   };
+
+
+  if (loading && !refreshing) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#F8FAFC]">
+        <AdminSkeleton />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]">
@@ -241,3 +259,57 @@ const navItems = [
 ];
 
 export default AdminDashboard;
+
+
+
+const AdminSkeleton = () => (
+  <View className="flex-1 px-4 pt-6">
+    <View className="mb-6">
+      <View className="h-7 w-48 bg-slate-200 rounded-md mb-2" />
+      <View className="h-3 w-32 bg-slate-100 rounded-sm" />
+    </View>
+    <View className="flex-row flex-wrap justify-between mb-4">
+      {[1, 2, 3, 4].map((i) => (
+        <View 
+          key={i} 
+          style={{ width: width * 0.44 }} 
+          className="bg-white border border-slate-100 rounded-md p-4 mb-4 flex-row items-center gap-3"
+        >
+          <View className="w-10 h-10 rounded-full bg-slate-100" />
+          <View className="h-3 w-16 bg-slate-100 rounded" />
+        </View>
+      ))}
+    </View>
+    <View className="flex-row flex-wrap justify-between mb-2 bg-white border border-slate-100">
+      {[1, 2, 3, 4].map((i) => (
+        <View 
+          key={i} 
+          style={{ width: '50%' }} 
+          className="p-5 border border-slate-50"
+        >
+          <View className="h-2 w-12 bg-slate-100 rounded mb-2" />
+          <View className="h-6 w-20 bg-slate-200 rounded" />
+        </View>
+      ))}
+    </View>
+
+    <View className="mt-8 gap-y-6">
+      <View className="h-6 w-40 bg-slate-200 rounded mb-2" />
+      <View className="bg-white p-5 border border-slate-100 h-52 items-center justify-center">
+        <View className="w-full h-32 bg-slate-50 rounded-xl" />
+        <View className="flex-row justify-between w-full mt-4 px-2">
+           {[1,2,3,4,5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
+        </View>
+      </View>
+    </View>
+     <View className="mt-8 gap-y-6">
+      <View className="bg-white p-5 border border-slate-100 h-52 items-center justify-center">
+        <View className="w-full h-32 bg-slate-50 rounded-xl" />
+        <View className="flex-row justify-between w-full mt-4 px-2">
+           {[1,2,3,4,5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
+        </View>
+      </View>
+    </View>
+  
+  </View>
+);

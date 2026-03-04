@@ -48,6 +48,7 @@ const AddProduct = () => {
   const dispatch = useDispatch();
   const { products } = useSelector(store => store.product);
 
+
   const resetForm = () => {
     setProductData({
       productName: "",
@@ -60,70 +61,68 @@ const AddProduct = () => {
   };
 
 
-const pickImages = async () => {
-  try {
-    // 🔥 Request permission FIRST
-    const permissionResult =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permissionResult.granted) {
-      Alert.alert("Permission Required", "Please allow gallery access.");
-      return;
+  const pickImages = async () => {
+    try {
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permissionResult.granted) {
+        Alert.alert("Permission Required", "Please allow gallery access.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        selectionLimit: 5,
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets?.length > 0) {
+        setLoading(true);
+
+        const processedImages = await Promise.all(
+          result.assets.map(async (asset) => {
+            const manipResult = await ImageManipulator.manipulateAsync(
+              asset.uri,
+              [{ resize: { width: 800 } }],
+              { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+            );
+
+            return {
+              uri: manipResult.uri,
+              name: asset.fileName || `product_${Date.now()}.jpg`,
+              type: "image/jpeg",
+            };
+          })
+        );
+        setProductData(prev => ({
+          ...prev,
+          productImg: [...prev.productImg, ...processedImages].slice(0, 5)
+        }));
+      }
+
+    } catch (error) {
+      console.log("Image Picker Error:", error);
+      Alert.alert("Error", "Image picker failed.");
+    } finally {
+      setLoading(false);
     }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      selectionLimit: 5,
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets?.length > 0) {
-      setLoading(true);
-
-      const processedImages = await Promise.all(
-        result.assets.map(async (asset) => {
-          const manipResult = await ImageManipulator.manipulateAsync(
-            asset.uri,
-            [{ resize: { width: 800 } }],
-            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
-          );
-
-          return {
-            uri: manipResult.uri,
-            name: asset.fileName || `product_${Date.now()}.jpg`,
-            type: "image/jpeg",
-          };
-        })
-      );
-
-      setProductData(prev => ({
-        ...prev,
-        productImg: [...prev.productImg, ...processedImages].slice(0, 5)
-      }));
-    }
-
-  } catch (error) {
-    console.log("Image Picker Error:", error);
-    Alert.alert("Error", "Image picker failed.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   const removeImage = (index) => {
     const updated = [...productData.productImg];
     updated.splice(index, 1);
     setProductData({ ...productData, productImg: updated });
   };
 
-  // --- SUBMIT HANDLER ---
+
+
   const submitHandler = async () => {
-    // Validation
     if (!productData.productName || !productData.productPrice || productData.productImg.length === 0) {
       Alert.alert("Error", "Please fill required fields and add at least one image.");
       return;
     }
-
     const formData = new FormData();
     formData.append("productName", productData.productName);
     formData.append("productPrice", productData.productPrice);
@@ -163,6 +162,8 @@ const pickImages = async () => {
     }
   };
 
+
+
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
       <KeyboardAvoidingView
@@ -171,11 +172,11 @@ const pickImages = async () => {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          
+
           <ScrollView showsVerticalScrollIndicator={false}>
             <View className=" pt-10 pb-20 px-6 rounded-b-[40px] flex-row justify-between items-start">
               <View className="flex-1 mr-4">
-                <Text className="text-3xl font-black  tracking-tighter">Add Product</Text>
+                <Text className="text-3xl font-black  tracking-tighter">Add Product</Text>
                 <Text className=" mt-1 opacity-90 font-medium">
                   Fill the form below to publish a new product on Sanjeevini.
                 </Text>
@@ -248,7 +249,7 @@ const pickImages = async () => {
                   <View className="flex-row items-center gap-2 mb-4">
                     <Camera size={16} color="#E91E63" />
                     <Text className="text-[#E91E63] font-black text-xs uppercase tracking-widest">
-                      Add Images{"  "} <Text className='text-base font-semibold text-red-600'>{"["}ALLOWED ONLY 5 IMAGES{"]"}</Text>
+                      Add Images{"  "} <Text className='text-base font-semibold text-red-600'>{"["}ALLOWED ONLY 5 IMAGES{"]"}</Text>
                     </Text>
                   </View>
 
@@ -300,7 +301,8 @@ const pickImages = async () => {
   );
 };
 
-// Helper Component for Form Inputs
+
+
 const LabelInput = ({ label, icon, ...props }) => (
   <View className="gap-y-2">
     <View className="flex-row items-center gap-2 ml-1">

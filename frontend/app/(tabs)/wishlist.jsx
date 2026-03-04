@@ -86,11 +86,40 @@ export default function Wishlist() {
     loadWishlist();
   }, []);
 
-  if (loading) return (
-    <View className="flex-1 justify-center items-center">
-      <ActivityIndicator size="large" color="#F43F5E" />
+const WishlistSkeleton = () => (
+  <View className="w-[48%] bg-white p-3 rounded-xl mb-4 border border-gray-50">
+    <View className="relative aspect-square bg-gray-100 rounded-md overflow-hidden items-center justify-center p-5">
+      <View className="w-20 h-20 bg-gray-200 rounded-lg" />
     </View>
-  );
+
+    <View className="mt-2 px-1">
+      <View className="h-3 w-3/4 bg-gray-200 rounded-md mb-2" />
+      <View className="h-4 w-1/2 bg-gray-200 rounded-md mb-3" />
+      <View className="h-9 w-full bg-gray-100 rounded-md" />
+    </View>
+  </View>
+);
+
+if (loading) {
+    return (
+      <SafeAreaView className="flex-1 bg-[#F9FAFB]">
+        <ScrollView>
+          <View className="px-6 pt-3 pb-6 border-b border-gray-100">
+            <View className="flex-row items-center">
+              <View className="h-8 w-40 bg-gray-200 rounded-lg" />
+              <View className="ml-2 h-5 w-8 bg-rose-100 rounded-full" />
+            </View>
+            <View className="h-3 w-48 bg-gray-100 rounded-md mt-2" />
+          </View>
+          <View className="flex-row flex-wrap justify-between px-3 mt-4">
+            {[1, 2, 3, 4, 5, 6].map((key) => (
+              <WishlistSkeleton key={key} />
+            ))}
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   if (!wishlist?.items?.length) {
     return (
@@ -101,7 +130,7 @@ export default function Wishlist() {
         <Text className="text-xl font-black text-slate-900 tracking-tight" numberOfLines={1}>Your wishlist is empty</Text>
         <Text className="text-slate-400 text-center mt-2 mb-8 text-sm">Items you save will appear here for your next aesthetic upgrade!</Text>
         <TouchableOpacity
-          onPress={() => router.push('/products')}
+          onPress={() => router.push('/(tabs)/shop')}
           className="bg-black px-8 py-4 rounded-full w-full items-center"
         >
           <Text className="text-white font-bold uppercase tracking-widest text-xs">Shop Arrivals</Text>
@@ -124,11 +153,11 @@ export default function Wishlist() {
         </View>
         <View className="flex-row flex-wrap justify-between px-3 mt-4">
           {wishlist.items.map((item) => (
-            <View key={item.productId?._id} className="w-[48%] bg-white p-2 rounded-xl mb-4 shadow-sm border border-gray-50">
+            <View key={item.productId?._id} className="w-[48%] bg-white p-3 rounded-xl mb-4 shadow-sm border border-gray-50">
               <View className="relative aspect-square bg-gray-50 rounded-md overflow-hidden items-center justify-center p-5">
                 <TouchableOpacity
                   onPress={() => handleRemove(item.productId?._id)}
-                  className="absolute top-2 right-2 z-20 p-1.5 bg-white/90 rounded-full shadow-sm"
+                  className="absolute top-2 right-2 z-20 p-1.5 bg-white rounded-full shadow-sm"
                 >
                   <X size={18} color="#9CA3AF" />
                 </TouchableOpacity>

@@ -63,7 +63,7 @@ export default function TabsLayout() {
         options={{
           title: "Shop",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="grid" size={size} color={color} />
+            <Ionicons name="cube" size={size} color={color} />
           ),
         }}
       />
@@ -76,7 +76,7 @@ export default function TabsLayout() {
           tabBarBadge: cart?.items?.length > 0 ? cart.items.length : null,
           tabBarBadgeStyle: { backgroundColor: "black" },
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bag-handle" size={size} color={color} />
+            <Ionicons name="cart" size={size} color={color} />
           ),
         }}
       />
@@ -100,7 +100,7 @@ export default function TabsLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
+            <Ionicons name="person-circle" size={size} color={color} />
           ),
         }}
       />

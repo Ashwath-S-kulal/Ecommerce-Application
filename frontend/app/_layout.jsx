@@ -13,16 +13,18 @@ export default function RootLayout() {
             screenOptions={{
               headerShown: false,
               contentStyle: { backgroundColor: "white" },
-              
+
             }}
           >
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(pages)" />
             <Stack.Screen name="(admin)" />
+            <Stack.Screen name="components" />
           </Stack>
         </SafeAreaProvider>
       </PersistGate>
     </Provider>
   );
 }
+

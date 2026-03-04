@@ -13,17 +13,7 @@ import { Package, CreditCard, Clock, ChevronDown, ChevronRight } from "lucide-re
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import Constants from "expo-constants";
-
-const OrderSkeleton = () => (
-  <View className="border border-slate-100 rounded-3xl bg-white mb-6 p-5">
-    <View className="h-4 w-32 bg-slate-50 rounded mb-4" />
-    <View className="h-20 bg-slate-50 rounded-2xl w-full mb-4" />
-    <View className="flex-row justify-between">
-      <View className="h-4 w-24 bg-slate-50 rounded" />
-      <View className="h-8 w-20 bg-slate-50 rounded-lg" />
-    </View>
-  </View>
-);
+import FallbackImage from "../../assets/Product Doesnt Exist.webp";
 
 export default function ShowUserOrders() {
   const [orders, setOrders] = useState([]);
@@ -102,9 +92,17 @@ export default function ShowUserOrders() {
 
   if (loading) {
     return (
-      <ScrollView className="flex-1 bg-white p-4 pt-12">
-        {[1, 2, 3].map((i) => <OrderSkeleton key={i} />)}
-      </ScrollView>
+      <View className="flex-1 bg-white">
+        <View className="px-6 pt-14 pb-6">
+          <View className="h-9 w-48 bg-slate-200 rounded-lg mb-2" />
+          <View className="h-3 w-24 bg-slate-100 rounded" />
+        </View>
+        <ScrollView className="flex-1">
+          {[1, 2, 3].map((i) => (
+            <OrderSkeleton key={i} />
+          ))}
+        </ScrollView>
+      </View>
     );
   }
 
@@ -146,10 +144,22 @@ export default function ShowUserOrders() {
                 <View className="px-6 pb-2">
                   {order.products.map((item, idx) => (
                     <View key={idx} className="flex-row items-center mb-4 gap-4">
-                      <TouchableOpacity onPress={() => router.push(`/product/${item?.productId?._id}`)}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (item?.productId?._id) {
+                            router.push(`/product/${item.productId._id}`);
+                          } else {
+                            Alert.alert("Product not available", "This product no longer exists.");
+                          }
+                        }}
+                      >
                         <Image
-                          source={{ uri: item.productId?.productImg?.[0]?.url }}
-                          className="w-14 h-14 rounded-md bg-slate-50 border border-slate-100 object-contain"
+                          source={
+                            item?.productId?.productImg?.[0]?.url
+                              ? { uri: item.productId.productImg[0].url }
+                              : FallbackImage
+                          }
+                          className="w-14 h-14 rounded-md bg-slate-50 border border-slate-100"
                           resizeMode="cover"
                         />
                       </TouchableOpacity>
@@ -176,18 +186,48 @@ export default function ShowUserOrders() {
                 {isExpanded && (
                   <View className="px-6 pb-6">
                     <View className="pt-4 border-t border-slate-50">
-                      <View className="bg-slate-900 p-5 rounded-md flex-row justify-between items-center mb-6">
-                        <View>
-                          <Text className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Grand Total</Text>
-                          <Text className="text-xl font-black text-white">₹ {order.amount?.toLocaleString()}</Text>
+
+                      <View className="bg-slate-900 p-6 rounded-md mb-6 shadow-2xl border border-slate-800">
+                        <View className="mb-4">
+                          <View className="flex-row justify-between items-center mb-3">
+                            <Text className="text-slate-400 text-xs font-semibold tracking-wide" numberOfLines={1}>Subtotal</Text>
+                            <Text className="text-slate-200 font-bold text-sm" numberOfLines={1}>
+                              ₹ {order.subtotal?.toLocaleString() || "0"}
+                            </Text>
+                          </View>
+
+                          <View className="flex-row justify-between items-center mb-3">
+                            <Text className="text-slate-400 text-xs font-semibold tracking-wide" numberOfLines={1}>Tax </Text>
+                            <Text className="text-slate-200 font-bold text-sm" numberOfLines={1}>
+                              ₹ {order.tax?.toLocaleString() || "0"}
+                            </Text>
+                          </View>
+
+                          <View className="flex-row justify-between items-center">
+                            <Text className="text-slate-400 text-xs font-semibold tracking-wide" numberOfLines={1}>Shipping</Text>
+                            {order.shipping === 0 || !order.shipping ? (
+                              <View className="bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">
+                                <Text className="text-emerald-400 font-black uppercase text-[10px]" numberOfLines={1}>Free</Text>
+                              </View>
+                            ) : (
+                              <Text className="text-slate-200 font-bold text-sm" numberOfLines={1}>₹ {order.shipping.toLocaleString()}</Text>
+                            )}
+                          </View>
                         </View>
-                        <View className="bg-white/10 p-2 rounded-full">
-                          <CreditCard size={20} color="white" />
+                        <View className="h-[1px] bg-slate-800/60 w-full mb-5" />
+                        <View className="flex-row justify-between items-center">
+                          <Text className="text-[10px] font-black text-indigo-400 uppercase tracking-[2px] mb-1">
+                            Grand Total
+                          </Text>
+                          <Text className="text-3xl font-black text-white tracking-tighter">
+                            ₹ {order.amount?.toLocaleString() || "0"}
+                          </Text>
                         </View>
                       </View>
+
+
                       <View className="py-4 px-2">
                         <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Delivery Progress</Text>
-
                         {activeSteps.map((step, index) => {
                           const isCompleted = index < currentStepIdx;
                           const isCurrent = index === currentStepIdx;
@@ -273,3 +313,31 @@ export default function ShowUserOrders() {
     </ScrollView>
   );
 }
+
+
+const OrderSkeleton = () => (
+  <View className="bg-white border border-slate-200 rounded-md mb-6 overflow-hidden shadow-sm mx-4">
+    <View className="px-6 py-5 flex-row justify-between items-center">
+      <View>
+        <View className="h-2 w-16 bg-slate-100 rounded mb-2" />
+        <View className="h-4 w-24 bg-slate-200 rounded" />
+      </View>
+      <View className="h-7 w-20 bg-slate-100 rounded-full" />
+    </View>
+
+    <View className="px-6 pb-2">
+      <View className="flex-row items-center mb-4 gap-4">
+        <View className="w-14 h-14 rounded-md bg-slate-100 border border-slate-50" />
+        <View className="flex-1">
+          <View className="h-4 w-3/4 bg-slate-200 rounded mb-2" />
+          <View className="h-2 w-20 bg-slate-100 rounded" />
+        </View>
+        <View className="h-4 w-12 bg-slate-200 rounded" />
+      </View>
+    </View>
+
+    <View className="mx-6 mb-6 py-4 bg-slate-50 rounded-md items-center justify-center">
+      <View className="h-3 w-24 bg-slate-200 rounded" />
+    </View>
+  </View>
+);

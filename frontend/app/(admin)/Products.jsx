@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import {
   View, Text, TextInput, ScrollView, Image,
   TouchableOpacity, Modal, ActivityIndicator,
-  Alert, Dimensions
+  Alert, Dimensions,
+  Platform,
+  UIManager,
+  LayoutAnimation
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -11,7 +14,7 @@ import {
   LayoutGrid, X, Plus, Image as ImageIcon
 } from 'lucide-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import * as ImagePicker from 'expo-image-picker'; // Required: npx expo install expo-image-picker
+import * as ImagePicker from 'expo-image-picker';
 import axios from 'axios';
 import { setProducts } from '@/redux/productSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,7 +23,9 @@ import Constants from "expo-constants";
 import * as ImageManipulator from 'expo-image-manipulator';
 
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
-
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export default function AdminProduct() {
   const { products } = useSelector((store) => store?.product);
@@ -32,22 +37,23 @@ export default function AdminProduct() {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
+  const [deletingId, setDeletingId] = useState(null);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 1, 
+      quality: 1,
     });
 
     if (!result.canceled) {
-      setIsUpdating(true); 
+      setIsUpdating(true);
       try {
         const processedImages = await Promise.all(
           result.assets.map(async (asset) => {
             const manipResult = await ImageManipulator.manipulateAsync(
               asset.uri,
-              [{ resize: { width: 1000 } }], 
+              [{ resize: { width: 1000 } }],
               { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
             );
 
@@ -55,7 +61,7 @@ export default function AdminProduct() {
               uri: manipResult.uri,
               name: asset.fileName || `update_${Date.now()}.jpg`,
               type: 'image/jpeg',
-              isNew: true 
+              isNew: true
             };
           })
         );
@@ -166,9 +172,23 @@ export default function AdminProduct() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
+            setDeletingId(productId);
             try {
-              dispatch(setProducts(products.filter(p => p._id !== productId)));
-            } catch (e) { console.log(e); }
+              const accessToken = await AsyncStorage.getItem("accessToken");
+              const res = await axios.delete(`${BASE_URL}/api/product/delete/${productId}`, {
+                headers: { Authorization: `Bearer ${accessToken}` }
+              });
+
+              if (res.data.success) {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                dispatch(setProducts(products.filter(p => p._id !== productId)));
+              }
+            } catch (e) {
+              console.log("Delete Error:", e.message);
+              Alert.alert("Error", "Could not delete from server");
+            } finally {
+              setDeletingId(null);
+            }
           }
         }
       ]
@@ -178,7 +198,6 @@ export default function AdminProduct() {
   return (
     <SafeAreaView className="flex-1 bg-[#f9fafb]">
       <View className="p-4">
-        {/* HEADER */}
         <View className="mb-6">
           <View className="flex-row items-center gap-2" numberOfLines={1}>
             <Text className="text-2xl font-black text-slate-900 tracking-tighter">
@@ -187,12 +206,12 @@ export default function AdminProduct() {
           </View>
         </View>
 
-        {/* SEARCH & FILTER */}
         <View className="flex-row gap-2 mb-6">
           <View className="flex-1 relative justify-center">
-            <View className="absolute left-3 z-10"><Search size={16} color="#cbd5e1" /></View>
+            <View className="absolute left-3 z-10"><Search size={16} color="#64748b" /></View>
             <TextInput
               placeholder="Search products..."
+               placeholderTextColor="#94a3b8"
               className="bg-white border border-slate-100 rounded-md h-12 pl-10 pr-4 shadow-sm"
               value={searchTerm}
               onChangeText={setSearchTerm}
@@ -235,7 +254,6 @@ export default function AdminProduct() {
                 >
                   <Text className="text-slate-700">Low to High</Text>
                 </TouchableOpacity>
-
                 <TouchableOpacity
                   onPress={() => {
                     setSortOrder("highToLow");
@@ -245,14 +263,12 @@ export default function AdminProduct() {
                 >
                   <Text className="text-slate-700">High to Low</Text>
                 </TouchableOpacity>
-
               </View>
             )}
           </View>
         </View>
 
-        {/* LIST */}
-        <ScrollView showsVerticalScrollIndicator={false} className="mb-20 ">
+          <ScrollView showsVerticalScrollIndicator={false} className="mb-20 ">
           <View className="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden mb-20">
             {filteredProducts.map((product, index) => (
               <View
@@ -289,7 +305,6 @@ export default function AdminProduct() {
                   </Text>
                 </View>
 
-                {/* Bottom Row - Buttons */}
                 <View className="flex-row justify-end mt-4 gap-3">
                   <TouchableOpacity
                     onPress={() => {
@@ -310,7 +325,11 @@ export default function AdminProduct() {
                     }
                     className="flex-row items-center bg-red-50 px-4 py-2 rounded-lg"
                   >
-                    <Trash2 size={14} color="#ef4444" />
+                    {deletingId === product._id ? (
+                      <ActivityIndicator color="#ef4444" />
+                    ) : (
+                      <Trash2 size={14} color="#ef4444" />
+                    )}
                     <Text className="ml-2 text-red-500 font-semibold">
                       Delete
                     </Text>
@@ -322,7 +341,6 @@ export default function AdminProduct() {
         </ScrollView>
       </View>
 
-      {/* EDIT MODAL */}
       <Modal animationType="slide" transparent={true} visible={modalVisible}>
         <View className="flex-1 bg-black/50 justify-end">
           <View className="bg-white rounded-t-[40px] h-[85%] p-6">
@@ -335,8 +353,6 @@ export default function AdminProduct() {
 
             <ScrollView showsVerticalScrollIndicator={false}>
               <View className="gap-y-5">
-
-                {/* IMAGE PICKER UI */}
                 <View>
                   <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mb-2">Product Gallery</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
@@ -354,7 +370,6 @@ export default function AdminProduct() {
                   </ScrollView>
                 </View>
 
-                {/* FORM FIELDS */}
                 <LabelInput label="Product Name" icon={<Info size={12} color="#94a3b8" />} value={editProduct?.productName} onChangeText={(t) => setEditProduct({ ...editProduct, productName: t })} />
 
                 <View className="flex-row gap-4">
