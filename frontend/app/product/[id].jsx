@@ -9,21 +9,21 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
-  Alert,
 } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
-import { Feather, FontAwesome, Ionicons } from "@expo/vector-icons";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setCart, setWishlist } from "../../redux/productSlice";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 const { width } = Dimensions.get("window");
 import Constants from "expo-constants";
 import ImageViewing from "react-native-image-viewing";
+import { ShoppingBag, ShoppingCart } from "lucide-react-native";
 
 
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
+// const BASE_URL = "http://10.168.21.102:8000"
 
 export default function ProductPage() {
   const { id } = useLocalSearchParams();
@@ -31,23 +31,82 @@ export default function ProductPage() {
   const dispatch = useDispatch();
   const { products, wishlist } = useSelector((state) => state.product);
   const { user } = useSelector((state) => state.user);
-  const product = products?.find((item) => item._id === id);
   const [activeImg, setActiveImg] = useState(0);
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef(null);
   const [visible, setIsVisible] = useState(false);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [product, setProduct] = useState(products?.find((item) => item._id === id));
+  const [loadingProduct, setLoadingProduct] = useState(!product);
+  const [recLoading, setRecLoading] = useState(true);
 
-  const images = product.productImg?.map((img) => ({
+  const params = useLocalSearchParams();
+  const productId = params.id;
+  const images = product?.productImg?.map((img) => ({
     uri: img.url,
-  }));
+  })) || [];
+
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
+  const [randomProducts, setRandomProducts] = useState([])
+
+  useEffect(() => {
+    if (!product) return;
+
+    const fetchRecommendations = async () => {
+      try {
+        setRecLoading(true);
+        const catRes = await axios.get(`${BASE_URL}/api/product/getallproducts?category=${product.category}&limit=6`);
+        const brandRes = await axios.get(`${BASE_URL}/api/product/getallproducts?brand=${product.brand}&limit=6`);
+        const randRes = await axios.get(`${BASE_URL}/api/product/getallproducts?limit=20`);
+
+        setSimilarProducts(catRes.data.products.filter(p => p._id !== product._id));
+        setSuggestedProducts(brandRes.data.products.filter(p => p._id !== product._id));
+        const shuffled = randRes.data.products
+          .filter(p => p._id !== product._id)
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 6);
+
+        setRandomProducts(shuffled);
+      } catch (err) {
+        console.error("Error fetching recommendations", err);
+      }
+      finally {
+        setRecLoading(false);
+      }
+    };
+    fetchRecommendations();
+  }, [product]);
 
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
     setActiveImg(0);
   }, [id]);
+
+
+
+  useEffect(() => {
+    if (product) return;
+    const fetchProduct = async () => {
+      setLoadingProduct(true);
+      try {
+        const res = await axios.get(`${BASE_URL}/api/product/getproduct/${id}`);
+        if (res.data.success) {
+          setProduct(res.data.product);
+        }
+      } catch (err) {
+        showLocalToast("Product details unavailable");
+      } finally {
+        setLoadingProduct(false);
+      }
+    };
+    fetchProduct();
+  }, [productId]);
+
+
 
   const showLocalToast = (text) => {
     setToastMsg(text);
@@ -57,6 +116,8 @@ export default function ProductPage() {
       Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
     ]).start(() => setToastMsg(""));
   };
+
+
 
   const addToCart = async () => {
     const token = await AsyncStorage.getItem("accessToken");
@@ -70,15 +131,17 @@ export default function ProductPage() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.data.success) {
-        showLocalToast("Item added to bag");
+        showLocalToast("Item added to Cart");
         dispatch(setCart(res.data.cart));
       }
     } catch (error) {
-      showLocalToast("Failed to add to cart");
+      showLocalToast("Failed to add to Cart");
     } finally {
       setLoading(false);
     }
   };
+
+
 
   const toggleWishlist = async () => {
     const token = await AsyncStorage.getItem("accessToken");
@@ -86,7 +149,7 @@ export default function ProductPage() {
 
     const isInWishlist = wishlist?.items?.some(item => item.productId?._id === product?._id);
     const endpoint = isInWishlist ? `${BASE_URL}/api/wishlist/remove` : `${BASE_URL}/api/wishlist/add`;
-
+    setWishlistLoading(true);
     try {
       const res = await axios({
         method: isInWishlist ? "delete" : "post",
@@ -100,34 +163,33 @@ export default function ProductPage() {
       }
     } catch (error) {
       showLocalToast("Wishlist update failed");
+    } finally {
+      setWishlistLoading(false);
     }
   };
 
-  const similarProducts = useMemo(() => {
-    if (!product) return [];
-    return products
-      .filter((p) => p.category === product.category && p._id !== id)
-      .slice(0, 12);
-  }, [products, product, id]);
 
-  const suggestedProducts = useMemo(() => {
-    if (!product) return [];
-    return products
-      .filter((p) => p.category !== product.category && p._id !== id)
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 12);
-  }, [products, product, id]);
+
+
+
+  const handlePlaceOrder = () => {
+    if (!user) {
+      return showLocalToast("Please login to place an order");
+    }
+    router.push({
+      pathname: "/components/AddressFormSingle",
+      params: { productId: product._id, buyNow: true }
+    });
+  };
+
 
   if (!product) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#0F172A" />
-      </View>
-    );
+    return <ProductSkeleton />;
   }
 
   const isInWishlist = wishlist?.items?.some((item) => item.productId?._id === product?._id);
   const originalPrice = Math.round(product.productPrice * 1.25);
+
 
   return (
     <View className="flex-1 bg-white">
@@ -146,7 +208,6 @@ export default function ProductPage() {
           {product.productName}
         </Text>
       </View>
-
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false} ref={scrollRef}>
         <View className="px-4 pt-4 bg-white">
           <View style={{ height: width * 1.15 }} className="bg-[#F9FAFB] rounded-xl relative items-center justify-center overflow-hidden border border-gray-100">
@@ -163,8 +224,6 @@ export default function ProductPage() {
               visible={visible}
               onRequestClose={() => setIsVisible(false)}
             />
-
-
             <View className="absolute bottom-2 flex-row bg-white/80 p-2 rounded-xl border border-white/40 shadow-xl gap-2 ">
               {product.productImg?.slice(0, 5).map((img, index) => (
                 <TouchableOpacity
@@ -183,19 +242,28 @@ export default function ProductPage() {
             </View>
           </View>
         </View>
-
         <View className="px-8 py-8">
           <View className="flex-row justify-between items-center mb-1">
             <Text className="bg-pink-50 text-pink-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
               {product.category}
             </Text>
-            <TouchableOpacity onPress={toggleWishlist}>
-              <FontAwesome name={isInWishlist ? "heart" : "heart-o"} size={22} color={isInWishlist ? "#f43f5e" : "#cbd5e1"} />
+            <TouchableOpacity
+              onPress={toggleWishlist}
+              disabled={wishlistLoading}
+              className="w-10 h-10 items-center justify-center"
+            >
+              {wishlistLoading ? (
+                <ActivityIndicator size="small" color="#f43f5e" />
+              ) : (
+                <FontAwesome
+                  name={isInWishlist ? "heart" : "heart-o"}
+                  size={25}
+                  color={isInWishlist ? "#f43f5e" : "#cbd5e1"}
+                />
+              )}
             </TouchableOpacity>
           </View>
-
           <Text className="text-3xl font-black text-gray-900 uppercase leading-tight mt-2">{product.productName}</Text>
-
           <View className="flex-row items-center gap-4 my-6">
             <Text className="text-4xl font-black text-gray-900">₹{product.productPrice.toLocaleString()}</Text>
             <View>
@@ -203,57 +271,81 @@ export default function ProductPage() {
               <Text className="text-[10px] font-black text-green-600 uppercase">Save 25%</Text>
             </View>
           </View>
-
           <Text className="text-gray-500 italic leading-6 text-[14px] mb-10 border-l-2 border-pink-100 pl-4">
             {product.productDesc || "Handcrafted with premium materials..."}
           </Text>
-
-          <Section title="Similar" highlight={product.category} data={similarProducts} router={router} />
-          <Section title="You Might" highlight="Like These" data={suggestedProducts} router={router} />
+          <Section title="Similar" highlight="in Category" data={similarProducts} router={router} />
+          <Section title="More from" highlight={product.brand} data={suggestedProducts} loading={recLoading} router={router} />
+          <Section title="You Might" highlight="Also Like" data={randomProducts} loading={recLoading} router={router} />
         </View>
       </ScrollView>
 
       {toastMsg ? (
         <Animated.View style={[styles.toast, { opacity: fadeAnim }]} className="bg-black/90 px-6 py-3 rounded-full">
-          <Text className="text-white font-bold text-xs tracking-widest">{toastMsg}</Text>
+          <Text className="text-white font-bold text-xs tracking-widest" numberOfLines={1}>{toastMsg}</Text>
         </Animated.View>
       ) : null}
 
-      <View style={styles.footer} className="px-6 py-6 border-t border-gray-50 bg-white flex-row gap-3">
-        <TouchableOpacity
-          onPress={addToCart}
-          disabled={loading}
-          className="flex-[2] bg-[#0F172A] py-5 rounded-2xl flex-row justify-center items-center shadow-xl"
-        >
-          {loading ? <ActivityIndicator color="white" /> : (
-            <>
-              <Feather name="shopping-bag" size={18} color="white" />
-              <Text className="text-white font-black uppercase tracking-widest ml-3">Add to Cart</Text>
-            </>
-          )}
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => (user ? router.push("/cart") : router.push("/login"))}
-          activeOpacity={0.7}
-          className="flex-row items-center justify-center border-2 border-zinc-900 py-4 px-6 rounded-2xl bg-white shadow-sm"
-        >
-          <Text numberOfLines={1} className="text-zinc-900 font-bold text-sm mr-2">
-            {user ? "Go to Cart" : "Login to View Cart"}
-          </Text>
+      <View className="px-6 pt-4 pb-8 border-t border-gray-100 bg-white shadow-2xl">
+        <View className="flex-row gap-3 ">
+          <TouchableOpacity
+            onPress={addToCart}
+            disabled={loading}
+            activeOpacity={0.8}
+            className="flex-1 bg-white border-2 border-[#0F172A] py-4 rounded-2xl flex-row justify-center items-center"
+          >
+            {loading ? (
+              <ActivityIndicator color="#0F172A" />
+            ) : (
+              <>
+                <ShoppingCart size={19} color="#0F172A" strokeWidth={2.5} />
 
-          <Feather
-            name={user ? "arrow-right" : "lock"}
-            size={18}
-            color="#18181b"
-          />
-        </TouchableOpacity>
+              </>
+            )}
+            <Text className="text-[#0F172A] font-[900] uppercase tracking-tighter ml-2 text-[13px]">
+              Add to Cart
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handlePlaceOrder}
+            activeOpacity={0.9}
+            className="flex-1 bg-[#0F172A] py-4 rounded-2xl flex-row justify-center items-center shadow-md shadow-slate-400"
+          >
+            <ShoppingBag size={19} color="white" strokeWidth={2.5} />
+            <Text className="text-white font-[900] uppercase tracking-tighter ml-2 text-[13px]" numberOfLines={1}>
+              Buy Now
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
 }
 
-const Section = ({ title, highlight, data, router }) => {
+
+
+
+const Section = ({ title, highlight, data, loading, router }) => {
+  if (loading) {
+    return (
+      <View className="mb-10">
+        <View className="w-32 h-6 bg-gray-100 rounded-md mb-4" />
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {[1, 2, 3].map((i) => (
+            <View key={i} className="mr-4 w-36">
+              <View className="bg-gray-100 rounded-md mb-2 h-36" />
+              <View className="w-20 h-3 bg-gray-100 rounded-md mb-2" />
+              <View className="w-12 h-3 bg-gray-100 rounded-md" />
+            </View>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }
+
   if (data.length === 0) return null;
+
   return (
     <View className="mb-10">
       <Text className="text-xl font-black text-slate-900 tracking-tighter mb-4">
@@ -273,15 +365,8 @@ const Section = ({ title, highlight, data, router }) => {
     </View>
   );
 };
-
 const styles = StyleSheet.create({
-  footer: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 10,
-  },
+
   toast: {
     position: 'absolute',
     bottom: 120,
@@ -289,3 +374,52 @@ const styles = StyleSheet.create({
     zIndex: 1000
   }
 });
+
+
+const ProductSkeleton = () => {
+  const shimmerAnim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(shimmerAnim, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <View className="flex-1 bg-white">
+      <View className="px-6 pt-14 pb-2 flex-row items-center">
+        <View className="w-6 h-6 bg-gray-200 rounded-full mr-3" />
+        <View className="w-20 h-4 bg-gray-100 rounded-md" />
+      </View>
+
+      <ScrollView className="flex-1 px-4 pt-4">
+        <Animated.View
+          style={{ height: width * 1.15, opacity: shimmerAnim }}
+          className="bg-gray-100 rounded-xl border border-gray-200"
+        />
+
+        <View className="px-4 py-8">
+          <View className="flex-row justify-between mb-4">
+            <View className="w-24 h-6 bg-gray-100 rounded-full" />
+            <View className="w-8 h-8 bg-gray-100 rounded-full" />
+          </View>
+
+          <Animated.View style={{ opacity: shimmerAnim }} className="w-3/4 h-8 bg-gray-200 rounded-md mb-4" />
+          <Animated.View style={{ opacity: shimmerAnim }} className="w-1/2 h-10 bg-gray-200 rounded-md mb-8" />
+
+          <View className="w-full h-4 bg-gray-50 rounded-md mb-2" />
+          <View className="w-full h-4 bg-gray-50 rounded-md mb-2" />
+          <View className="w-2/3 h-4 bg-gray-50 rounded-md mb-10" />
+        </View>
+      </ScrollView>
+
+      <View className="px-6 pt-4 pb-8 border-t border-gray-100 flex-row gap-3">
+        <View className="flex-1 h-14 bg-gray-100 rounded-2xl" />
+        <View className="flex-1 h-14 bg-gray-200 rounded-2xl" />
+      </View>
+    </View>
+  );
+};

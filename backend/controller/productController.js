@@ -55,23 +55,31 @@ export const addProduct = async (req, res) => {
 
 export const getAllProduct = async (req, res) => {
   try {
-    const products = await Product.find();
-    if (!products) {
-      return res.status(404).json({
-        success: false,
-        message: "no product avilable",
-        products: [],
-      });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const query = {};
+    if (req.query.category && req.query.category !== "All") {
+      query.category = req.query.category;
     }
+    if (req.query.brand && req.query.brand !== "All") {
+      query.brand = req.query.brand;
+    }
+
+    const products = await Product.find(query)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const totalProducts = await Product.countDocuments(query);
+
     return res.status(200).json({
       success: true,
       products,
+      hasMore: skip + products.length < totalProducts,
     });
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res.status(500).json({ success: false, message: error.message });
   }
 };
 
@@ -93,6 +101,7 @@ export const deleteProduct = async (req, res) => {
       }
     }
     await Product.findByIdAndDelete(productId);
+    await cloudinary.uploader.destroy(product.cloudinary_public_id); // Delete from Cloudinary
 
     await Cart.updateMany(
       { "items.productId": productId },
@@ -223,6 +232,33 @@ export const searchProducts = async (req, res) => {
       success: false,
       message: "Server error during search",
       error: error.message
+    });
+  }
+};
+
+export const getProductById = async (req, res) => {
+  console.log("hiii")
+  try {
+    const { id } = req.params;
+    
+    const product = await Product.findById(id);
+    
+    if (!product) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Product not found" 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      product 
+    });
+  } catch (error) {
+    console.error("Error fetching single product:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error while fetching product" 
     });
   }
 };

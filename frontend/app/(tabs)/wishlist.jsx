@@ -19,6 +19,7 @@ export default function Wishlist() {
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [isRemovingId, setIsRemovingId] = useState(null);
 
   const API = `${Constants.expoConfig.extra.apiUrl}/api/wishlist`;
   const CART_API = `${Constants.expoConfig.extra.apiUrl}/api/cart`;
@@ -52,6 +53,7 @@ export default function Wishlist() {
   };
 
   const handleRemove = async (productId) => {
+    setIsRemovingId(productId); // Start loading for this specific ID
     try {
       const token = await AsyncStorage.getItem("accessToken");
       const res = await axios.delete(`${API}/remove`, {
@@ -60,10 +62,12 @@ export default function Wishlist() {
       });
       if (res.data.success) {
         dispatch(setWishlist(res.data.wishlist));
-        setToastMsg("Removed from Whishlist"); 
+        setToastMsg("Removed from Whishlist");
       }
     } catch (error) {
-      setToastMsg("Failed to remove item"); 
+      setToastMsg("Failed to remove item");
+    } finally {
+      setIsRemovingId(null); // Stop loading
     }
   };
 
@@ -75,7 +79,7 @@ export default function Wishlist() {
       });
       if (res.data.success) {
         dispatch(setCart(res.data.cart));
-        setToastMsg("Added to cart"); 
+        setToastMsg("Added to cart");
       }
     } catch (error) {
       setToastMsg("Failed to add to cart");
@@ -86,21 +90,21 @@ export default function Wishlist() {
     loadWishlist();
   }, []);
 
-const WishlistSkeleton = () => (
-  <View className="w-[48%] bg-white p-3 rounded-xl mb-4 border border-gray-50">
-    <View className="relative aspect-square bg-gray-100 rounded-md overflow-hidden items-center justify-center p-5">
-      <View className="w-20 h-20 bg-gray-200 rounded-lg" />
-    </View>
+  const WishlistSkeleton = () => (
+    <View className="w-[48%] bg-white p-3 rounded-xl mb-4 border border-gray-50">
+      <View className="relative aspect-square bg-gray-100 rounded-md overflow-hidden items-center justify-center p-5">
+        <View className="w-20 h-20 bg-gray-200 rounded-lg" />
+      </View>
 
-    <View className="mt-2 px-1">
-      <View className="h-3 w-3/4 bg-gray-200 rounded-md mb-2" />
-      <View className="h-4 w-1/2 bg-gray-200 rounded-md mb-3" />
-      <View className="h-9 w-full bg-gray-100 rounded-md" />
+      <View className="mt-2 px-1">
+        <View className="h-3 w-3/4 bg-gray-200 rounded-md mb-2" />
+        <View className="h-4 w-1/2 bg-gray-200 rounded-md mb-3" />
+        <View className="h-9 w-full bg-gray-100 rounded-md" />
+      </View>
     </View>
-  </View>
-);
+  );
 
-if (loading) {
+  if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-[#F9FAFB]">
         <ScrollView>
@@ -157,9 +161,14 @@ if (loading) {
               <View className="relative aspect-square bg-gray-50 rounded-md overflow-hidden items-center justify-center p-5">
                 <TouchableOpacity
                   onPress={() => handleRemove(item.productId?._id)}
-                  className="absolute top-2 right-2 z-20 p-1.5 bg-white rounded-full shadow-sm"
+                  disabled={isRemovingId === item.productId?._id} 
+                  className="absolute top-2 right-2 z-20 p-1.5 bg-white rounded-full shadow-sm items-center justify-center w-8 h-8"
                 >
-                  <X size={18} color="#9CA3AF" />
+                  {isRemovingId === item.productId?._id ? (
+                    <ActivityIndicator size="small" color="#9CA3AF" />
+                  ) : (
+                    <X size={18} color="#9CA3AF" />
+                  )}
                 </TouchableOpacity>
 
                 <TouchableOpacity

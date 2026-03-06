@@ -128,7 +128,8 @@ const AddProduct = () => {
     formData.append("productPrice", productData.productPrice);
     formData.append("productDesc", productData.productDesc);
     formData.append("category", productData.category);
-    formData.append("brand", productData.brand);
+
+    formData.append("brand", "Sanjeevini");
 
     productData.productImg.forEach((img) => {
       formData.append("files", {
@@ -193,7 +194,6 @@ const AddProduct = () => {
               </Text>
 
               <View className="gap-y-5">
-                {/* Product Name */}
                 <LabelInput
                   label="Product Name"
                   placeholder="Handmade Silk Saree"
@@ -201,7 +201,6 @@ const AddProduct = () => {
                   onChangeText={(t) => setProductData({ ...productData, productName: t })}
                 />
 
-                {/* Price & Category Row */}
                 <View className="flex-row gap-4">
                   <View className="flex-1">
                     <LabelInput
@@ -224,16 +223,14 @@ const AddProduct = () => {
                   </View>
                 </View>
 
-                {/* Brand */}
                 <LabelInput
                   label="Brand"
                   placeholder="Sanjeevini Group"
                   icon={<Tag size={12} color="#94a3b8" />}
-                  value={productData.brand}
-                  onChangeText={(t) => setProductData({ ...productData, brand: t })}
+                  value="Sanjeevini"
+                  editable={false}
                 />
 
-                {/* Description */}
                 <LabelInput
                   label="Description"
                   placeholder="Tell customers more..."
@@ -244,7 +241,6 @@ const AddProduct = () => {
                   onChangeText={(t) => setProductData({ ...productData, productDesc: t })}
                 />
 
-                {/* IMAGE UPLOAD SECTION */}
                 <View className="pt-4 border-t border-slate-50">
                   <View className="flex-row items-center gap-2 mb-4">
                     <Camera size={16} color="#E91E63" />
@@ -275,7 +271,6 @@ const AddProduct = () => {
                   </ScrollView>
                 </View>
 
-                {/* SUBMIT BUTTON */}
                 <TouchableOpacity
                   onPress={submitHandler}
                   disabled={loading}

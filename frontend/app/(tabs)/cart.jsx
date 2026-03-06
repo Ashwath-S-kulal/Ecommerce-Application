@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'expo-router';
 import { Trash2, Minus, Plus, ArrowLeft, Truck, ShoppingCart, ChevronRight } from 'lucide-react-native';
@@ -27,7 +27,7 @@ export default function Cart() {
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [loading, setLoading] = useState(true);
-
+  const [isDeletingId, setIsDeletingId] = useState(null);
 
   const showToast = (text) => {
     setToastMsg(text);
@@ -72,6 +72,7 @@ export default function Cart() {
   };
 
   const handleRemove = async (productId) => {
+    setIsDeletingId(productId); // Start loading for this ID
     try {
       const accessToken = await AsyncStorage.getItem('accessToken');
       const res = await axios.delete(`${API}/remove`, {
@@ -86,6 +87,8 @@ export default function Cart() {
       console.log(error);
       showToast('Failed to remove item');
 
+    } finally {
+      setIsDeletingId(null); // Stop loading
     }
   };
 
@@ -226,8 +229,19 @@ export default function Cart() {
                       <Plus size={16} color="#000" />
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity onPress={() => handleRemove(item.productId?._id)} className="flex-row items-center gap-2 border border-red-400 rounded-lg px-2 py-1">
-                    <Text className="text-red-500"> Delete</Text><Trash2 size={16} color="#ef4444" />
+                  <TouchableOpacity
+                    onPress={() => handleRemove(item.productId?._id)}
+                    disabled={isDeletingId === item.productId?._id} // Disable while deleting
+                    className="flex-row items-center gap-2 border border-red-400 rounded-lg px-3 py-1.5 h-10 min-w-[80px] justify-center"
+                  >
+                    {isDeletingId === item.productId?._id ? (
+                      <ActivityIndicator size="small" color="#ef4444" />
+                    ) : (
+                      <>
+                        <Trash2 size={16} color="#ef4444" />
+                      </>
+                    )}
+                    <Text className="text-red-500 font-bold text-xs">Remove</Text>
                   </TouchableOpacity>
                 </View>
               </View>

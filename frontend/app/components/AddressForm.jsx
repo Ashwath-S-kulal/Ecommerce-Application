@@ -226,10 +226,10 @@ export default function AddressForm({ navigation }) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView contentContainerStyle={{ padding: 20 }}>
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom:5}}>
 
             <View className="mb-6 items-center">
-              <Text className="text-2xl font-[900] text-[#0f172a]" numberOfLines={1}>
+              <Text className="text-2xl font-[900] text-[#0f172a]"   numberOfLines={1}>
                 Checkout <Text className="text-[#ec4899] italic font-serif">Process</Text>
               </Text>
               <Text className="text-[12px] text-[#64748b] mt-1">Complete your order by providing delivery details</Text>
@@ -254,7 +254,7 @@ export default function AddressForm({ navigation }) {
                 <View className="h-[1px] bg-[#f1f5f9] my-3" />
                 <View className="flex-row justify-between items-center">
                   <Text className="text-[16px] font-bold">Total Amount</Text>
-                  <Text className="text-[24px] font-[900] italic">₹{total.toLocaleString()}</Text>
+                  <Text className="text-[24px] font-[900] ">₹{total.toLocaleString()}</Text>
                 </View>
               </View>
             </View>

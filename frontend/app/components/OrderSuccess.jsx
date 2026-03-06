@@ -42,7 +42,7 @@ export default function OrderSuccess() {
 
                 <View className="items-center mb-5">
                     <Text className="text-3xl font-[900] text-slate-900 tracking-tight text-center" numberOfLines={1}>
-                        Payment <Text className="text-emerald-500 ">Success!</Text>
+                        Order <Text className="text-emerald-500 ">Success!</Text>
                     </Text>
                     <Text className="text-slate-500 font-medium text-center mt-3 text-base px-2">
                         Your order has been placed successfully and is being processed.

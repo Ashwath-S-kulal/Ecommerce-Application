@@ -8,7 +8,8 @@ import { useRouter } from 'expo-router';
 import axios from 'axios';
 import {
   Users, ShoppingBag, PackageSearch, ArrowRight,
-  IndianRupee, Package, PlusCircle, TrendingUp
+  IndianRupee, Package, PlusCircle, TrendingUp,
+  Activity
 } from 'lucide-react-native';
 import { LineChart } from "react-native-chart-kit";
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -21,9 +22,9 @@ const AdminDashboard = () => {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  
-  const [stats, setStats] = useState({ users: 0, products: 0, revenue: 0, totalOrders: 0  });
-  
+
+  const [stats, setStats] = useState({ users: 0, products: 0, revenue: 0, totalOrders: 0 });
+
   const [weeklyData, setWeeklyData] = useState(null);
   const [monthlyData, setMonthlyData] = useState(null);
   const [yearlyData, setYearlyData] = useState(null);
@@ -36,12 +37,12 @@ const AdminDashboard = () => {
       const accessToken = await AsyncStorage.getItem("accessToken");
 
       const [userRes, productRes, orderRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/user/alluser`, { 
-          headers: { Authorization: `Bearer ${accessToken}` } 
+        axios.get(`${BASE_URL}/api/user/alluser`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
         }),
         axios.get(`${BASE_URL}/api/product/getallproducts`),
-        axios.get(`${BASE_URL}/api/order/getallorders`, { 
-          headers: { Authorization: `Bearer ${accessToken}` } 
+        axios.get(`${BASE_URL}/api/order/getallorders`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
         })
       ]);
 
@@ -107,7 +108,7 @@ const AdminDashboard = () => {
       d.setMonth(now.getMonth() - i);
       const targetMonth = d.getMonth();
       const targetYear = d.getFullYear();
-      
+
       mLabels.push(monthNames[targetMonth]);
       const sum = safeOrders
         .filter(o => {
@@ -120,7 +121,7 @@ const AdminDashboard = () => {
     setMonthlyData({ labels: mLabels, datasets: [{ data: mData }] });
     const curYear = now.getFullYear();
     const yLabels = [(curYear - 2).toString(), (curYear - 1).toString(), curYear.toString()];
-    const yData = yLabels.map(year => 
+    const yData = yLabels.map(year =>
       safeOrders
         .filter(o => new Date(o.createdAt).getFullYear().toString() === year)
         .reduce((acc, o) => acc + Number(o.amount || o.totalAmount || 0), 0)
@@ -164,9 +165,9 @@ const AdminDashboard = () => {
 
         <View className="flex-row flex-wrap justify-between mb-4">
           {navItems.map((item) => (
-            <TouchableOpacity 
-              key={item.to} 
-              onPress={() => router.push(item.to)} 
+            <TouchableOpacity
+              key={item.to}
+              onPress={() => router.push(item.to)}
               style={{ width: width * 0.44 }}
               className="bg-white border border-slate-100 rounded-md p-4 mb-4 shadow-sm flex-row items-center gap-3"
             >
@@ -193,6 +194,33 @@ const AdminDashboard = () => {
             <ChartSection title="Weekly Sales (Last 7 Days)" data={weeklyData} />
             <ChartSection title="Monthly Growth (Last 6 Months)" data={monthlyData} />
             <ChartSection title="Yearly Revenue" data={yearlyData} />
+
+
+            <TouchableOpacity
+              onPress={() => router.push("/(admin)/StorageCard")}
+              activeOpacity={0.7}
+              className="bg-zinc-900 mx-1 p-5 rounded-md flex-row items-center justify-between shadow-lg shadow-emerald-900/20"
+            >
+              <View className="flex-row items-center gap-4">
+                <View className="w-12 h-12 bg-emerald-500/10 rounded-2xl items-center justify-center border border-emerald-500/20">
+                  <Activity size={24} color="#10b981" />
+                </View>
+                <View>
+                  <Text className="text-white font-bold text-base">Your App DataBase Storage</Text>
+                  <View className="flex-row items-center mt-1">
+                    <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
+                    <Text className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">
+                      Check DB & Cloud Storage
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              <View className="bg-zinc-800 p-2 rounded-full">
+                <ArrowRight size={18} color="#71717a" />
+              </View>
+            </TouchableOpacity>
+
+
           </View>
         )}
       </ScrollView>
@@ -224,8 +252,8 @@ const ChartSection = ({ title, data }) => (
 );
 
 const KpiCard = ({ title, value, hasRightBorder, hasBottomBorder }) => (
-  <View 
-    style={{ width: '50%' }} 
+  <View
+    style={{ width: '50%' }}
     className={`p-5 bg-white 
       ${hasRightBorder ? 'border-r border-slate-100' : ''} 
       ${hasBottomBorder ? 'border-b border-slate-100' : ''}`}
@@ -270,9 +298,9 @@ const AdminSkeleton = () => (
     </View>
     <View className="flex-row flex-wrap justify-between mb-4">
       {[1, 2, 3, 4].map((i) => (
-        <View 
-          key={i} 
-          style={{ width: width * 0.44 }} 
+        <View
+          key={i}
+          style={{ width: width * 0.44 }}
           className="bg-white border border-slate-100 rounded-md p-4 mb-4 flex-row items-center gap-3"
         >
           <View className="w-10 h-10 rounded-full bg-slate-100" />
@@ -282,9 +310,9 @@ const AdminSkeleton = () => (
     </View>
     <View className="flex-row flex-wrap justify-between mb-2 bg-white border border-slate-100">
       {[1, 2, 3, 4].map((i) => (
-        <View 
-          key={i} 
-          style={{ width: '50%' }} 
+        <View
+          key={i}
+          style={{ width: '50%' }}
           className="p-5 border border-slate-50"
         >
           <View className="h-2 w-12 bg-slate-100 rounded mb-2" />
@@ -298,18 +326,18 @@ const AdminSkeleton = () => (
       <View className="bg-white p-5 border border-slate-100 h-52 items-center justify-center">
         <View className="w-full h-32 bg-slate-50 rounded-xl" />
         <View className="flex-row justify-between w-full mt-4 px-2">
-           {[1,2,3,4,5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
+          {[1, 2, 3, 4, 5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
         </View>
       </View>
     </View>
-     <View className="mt-8 gap-y-6">
+    <View className="mt-8 gap-y-6">
       <View className="bg-white p-5 border border-slate-100 h-52 items-center justify-center">
         <View className="w-full h-32 bg-slate-50 rounded-xl" />
         <View className="flex-row justify-between w-full mt-4 px-2">
-           {[1,2,3,4,5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
+          {[1, 2, 3, 4, 5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
         </View>
       </View>
     </View>
-  
+
   </View>
 );
