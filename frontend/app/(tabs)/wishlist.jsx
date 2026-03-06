@@ -20,6 +20,7 @@ export default function Wishlist() {
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [isRemovingId, setIsRemovingId] = useState(null);
+  const [isAddingId, setIsAddingId] = useState(null);
 
   const API = `${Constants.expoConfig.extra.apiUrl}/api/wishlist`;
   const CART_API = `${Constants.expoConfig.extra.apiUrl}/api/cart`;
@@ -34,6 +35,8 @@ export default function Wishlist() {
       ]).start(() => setToastMsg(""));
     }
   }, [toastMsg]);
+
+  
 
   const loadWishlist = async () => {
     try {
@@ -52,8 +55,10 @@ export default function Wishlist() {
     }
   };
 
+
+
   const handleRemove = async (productId) => {
-    setIsRemovingId(productId); // Start loading for this specific ID
+    setIsRemovingId(productId); 
     try {
       const token = await AsyncStorage.getItem("accessToken");
       const res = await axios.delete(`${API}/remove`, {
@@ -67,11 +72,13 @@ export default function Wishlist() {
     } catch (error) {
       setToastMsg("Failed to remove item");
     } finally {
-      setIsRemovingId(null); // Stop loading
+      setIsRemovingId(null);  
     }
   };
 
+
   const handleMoveToCart = async (productId) => {
+    setIsAddingId(productId);
     try {
       const token = await AsyncStorage.getItem("accessToken");
       const res = await axios.post(`${CART_API}/add`, { productId }, {
@@ -83,26 +90,30 @@ export default function Wishlist() {
       }
     } catch (error) {
       setToastMsg("Failed to add to cart");
+    } finally {
+      setIsAddingId(null); 
     }
   };
+
 
   useEffect(() => {
     loadWishlist();
   }, []);
 
   const WishlistSkeleton = () => (
-    <View className="w-[48%] bg-white p-3 rounded-xl mb-4 border border-gray-50">
-      <View className="relative aspect-square bg-gray-100 rounded-md overflow-hidden items-center justify-center p-5">
-        <View className="w-20 h-20 bg-gray-200 rounded-lg" />
+    <View className="bg-white p-4 mb-4 rounded-2xl border border-slate-100 shadow-sm shadow-slate-200">
+      <View className="flex-row">
+        <View className="w-24 h-24 rounded-[20px] bg-gray-100" />
+        <View className="flex-1 px-4 justify-center">
+          <View className="h-4 w-3/4 bg-gray-100 rounded-md mb-2" />
+          <View className="h-3 w-1/2 bg-gray-100 rounded-md mb-3" />
+          <View className="h-5 w-1/3 bg-gray-100 rounded-md" />
+        </View>
       </View>
-
-      <View className="mt-2 px-1">
-        <View className="h-3 w-3/4 bg-gray-200 rounded-md mb-2" />
-        <View className="h-4 w-1/2 bg-gray-200 rounded-md mb-3" />
-        <View className="h-9 w-full bg-gray-100 rounded-md" />
-      </View>
+      <View className="mt-4 h-12 bg-gray-50 rounded-xl" />
     </View>
   );
+
 
   if (loading) {
     return (
@@ -115,8 +126,8 @@ export default function Wishlist() {
             </View>
             <View className="h-3 w-48 bg-gray-100 rounded-md mt-2" />
           </View>
-          <View className="flex-row flex-wrap justify-between px-3 mt-4">
-            {[1, 2, 3, 4, 5, 6].map((key) => (
+          <View className="px-5 mt-4">
+            {[1, 2, 3].map((key) => (
               <WishlistSkeleton key={key} />
             ))}
           </View>
@@ -134,8 +145,8 @@ export default function Wishlist() {
         <Text className="text-xl font-black text-slate-900 tracking-tight" numberOfLines={1}>Your wishlist is empty</Text>
         <Text className="text-slate-400 text-center mt-2 mb-8 text-sm">Items you save will appear here for your next aesthetic upgrade!</Text>
         <TouchableOpacity
-          onPress={() => router.push('/(tabs)/shop')}
-          className="bg-black px-8 py-4 rounded-full w-full items-center"
+          onPress={() => router.push('/shop')}
+          className="bg-black px-8 py-4 rounded-full items-center "
         >
           <Text className="text-white font-bold uppercase tracking-widest text-xs">Shop Arrivals</Text>
         </TouchableOpacity>
@@ -144,85 +155,86 @@ export default function Wishlist() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F9FAFB]">
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
-        <View className="px-6 pt-3 pb-6 border-b border-gray-100">
-          <View className="flex-row items-center">
-            <Text numberOfLines={1} className="text-3xl font-black text-gray-900 tracking-tight">My Wishlist</Text>
-            <View className="ml-2 bg-rose-50 px-2 py-0.5 rounded-full">
-              <Text className="text-rose-500 text-xs font-bold">{wishlist?.items?.length || 0}</Text>
-            </View>
+    <SafeAreaView className="flex-1 bg-[#FDFBF9]">
+      <View className="px-6 pt-3 pb-6 border-b border-gray-100">
+        <View className="flex-row items-center">
+          <Text numberOfLines={1} className="text-3xl font-black text-gray-900 tracking-tight">My Wishlist</Text>
+          <View className="ml-2 bg-rose-50 px-2 py-0.5 rounded-full">
+            <Text className="text-rose-500 text-xs font-bold">{wishlist?.items?.length || 0}</Text>
           </View>
-          <Text className="text-gray-400 text-xs mt-1">Saved items for your aesthetic upgrade.</Text>
         </View>
-        <View className="flex-row flex-wrap justify-between px-3 mt-4">
-          {wishlist.items.map((item) => (
-            <View key={item.productId?._id} className="w-[48%] bg-white p-3 rounded-xl mb-4 shadow-sm border border-gray-50">
-              <View className="relative aspect-square bg-gray-50 rounded-md overflow-hidden items-center justify-center p-5">
-                <TouchableOpacity
-                  onPress={() => handleRemove(item.productId?._id)}
-                  disabled={isRemovingId === item.productId?._id} 
-                  className="absolute top-2 right-2 z-20 p-1.5 bg-white rounded-full shadow-sm items-center justify-center w-8 h-8"
-                >
-                  {isRemovingId === item.productId?._id ? (
-                    <ActivityIndicator size="small" color="#9CA3AF" />
-                  ) : (
-                    <X size={18} color="#9CA3AF" />
-                  )}
-                </TouchableOpacity>
+        <Text className="text-gray-400 text-xs mt-1">Saved items for your aesthetic upgrade.</Text>
+      </View>
 
-                <TouchableOpacity
-                  className="w-full h-full p-3"
-                  onPress={() => router.push(`/product/${item.productId?._id}`)}
-                >
-                  <Image
-                    source={{ uri: item.productId?.productImg?.[0]?.url }}
-                    className="w-full h-full object-contain"
-                    resizeMode="contain"
-                  />
-                </TouchableOpacity>
-              </View>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 100 }}>
+        {wishlist.items.map((item) => (
+          <View
+            key={item.productId?._id}
+            className="relative bg-white p-4 mb-3 rounded-xl border border-slate-100 shadow-sm shadow-slate-200"
+          >
+            <TouchableOpacity
+              onPress={() => handleRemove(item.productId?._id)}
+              disabled={isRemovingId === item.productId?._id}
+              className="absolute top-4 right-4 z-10 w-8 h-8 bg-slate-50 rounded-full items-center justify-center active:scale-95"
+            >
+              {isRemovingId === item.productId?._id ? (
+                <ActivityIndicator size="small" color="#64748b" />
+              ) : (
+                <X size={20} color="#64748b" />
+              )}
+            </TouchableOpacity>
 
-              <View className="mt-2 px-1">
-                <Text numberOfLines={1} className="text-[13px] font-bold text-gray-800">
+            <View className="flex-row">
+              <TouchableOpacity
+                onPress={() => router.push(`/product/${item.productId?._id}`)}
+                className="w-24 h-24 rounded-[20px] overflow-hidden bg-slate-100">
+                <Image
+                  source={{ uri: item.productId?.productImg?.[0]?.url }}
+                  className="w-full h-full"
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+
+              <View className="flex-1 px-4 justify-center">
+                <Text className="text-base font-bold text-slate-900 pr-8" numberOfLines={1}>
                   {item.productId?.productName}
                 </Text>
-                <Text className="text-sm font-black text-gray-900 mt-1">
+                <Text className="text-xs text-slate-400 mt-0.5">
+                  {item.productId?.category || "Style and elegance"}
+                </Text>
+                <Text className="text-lg font-black text-slate-900 mt-1">
                   ₹{item.productId?.productPrice?.toLocaleString()}
                 </Text>
-
-                <TouchableOpacity
-                  onPress={() => handleMoveToCart(item.productId?._id)}
-                  className="mt-3 flex-row items-center justify-center bg-gray-900 py-2.5 rounded-md active:opacity-80"
-                >
-                  <ShoppingCart size={14} color="white" />
-                  <Text className="text-white text-[10px] font-black ml-2  uppercase">
-                    Add to Cart
-                  </Text>
-                </TouchableOpacity>
               </View>
             </View>
-          ))}
-        </View>
+
+            <TouchableOpacity
+              onPress={() => handleMoveToCart(item.productId?._id)}
+              disabled={isAddingId === item.productId?._id}
+              className={`mt-3 py-3 rounded-xl flex-row items-center justify-center active:scale-[0.99] ${isAddingId === item.productId?._id ? "bg-slate-100" : "bg-pink-50"
+                }`}
+            >
+              {isAddingId === item.productId?._id ? (
+                <ActivityIndicator size="small" color="#64748b" />
+              ) : (
+                <>
+                  <ShoppingCart size={16} color="#d11990" />
+
+                </>
+              )}
+              <Text className="text-pink-500 font-bold ml-2 text-xs uppercase tracking-wider" numberOfLines={1}>
+                Add to cart
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ))}
       </ScrollView>
 
-      {toastMsg ? (
-        <Animated.View
-          pointerEvents="none"
-          style={{
-            opacity: fadeAnim,
-            transform: [{
-              translateY: fadeAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [20, 0]
-              })
-            }]
-          }}
-          className="absolute bottom-10 self-center bg-black/90 px-6 py-3 rounded-full shadow-2xl z-[100]"
-        >
+      {toastMsg && (
+        <Animated.View style={{ opacity: fadeAnim }} className="absolute bottom-10 self-center bg-black/90 px-6 py-3 rounded-full z-[100]">
           <Text className="text-white font-bold text-[10px] tracking-widest">{toastMsg}</Text>
         </Animated.View>
-      ) : null}
+      )}
 
       <Modal
         visible={!!selectedProductId}
@@ -230,10 +242,7 @@ export default function Wishlist() {
         presentationStyle="pageSheet"
         onRequestClose={() => setSelectedProductId(null)}
       >
-        <ProductDetail
-          id={selectedProductId}
-          onBack={() => setSelectedProductId(null)}
-        />
+        <ProductDetail id={selectedProductId} onBack={() => setSelectedProductId(null)} />
       </Modal>
     </SafeAreaView>
   );
