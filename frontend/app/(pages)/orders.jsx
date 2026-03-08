@@ -19,7 +19,9 @@ export default function ShowUserOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState({});
-  const BASE_URL = Constants.expoConfig.extra.apiUrl;
+
+  // const BASE_URL = Constants.expoConfig.extra.apiUrl;
+  const BASE_URL = "http://10.44.217.102:8000"
 
   useEffect(() => {
     fetchOrders();
@@ -169,8 +171,39 @@ export default function ShowUserOrders() {
                         <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Quantity: {item.quantity}</Text>
                       </View>
                       <Text className="text-sm font-black text-slate-900">₹{(item.productId?.productPrice * item.quantity).toLocaleString()}</Text>
+
                     </View>
                   ))}
+
+                  {order.status !== "Cancelled" && (
+                    <View className="mt-2 mb-4 bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 flex-row items-center">
+
+                      <View className="flex-1">
+                        <Text className="text-[10px] font-black text-emerald-700 uppercase tracking-[0.15em] mb-1">
+                          {order.status === "Delivered" ? "Success" : "Delivery Information"}
+                        </Text>
+
+                        <View className="flex-row items-baseline">
+                          <Text className="text-slate-900 font-black text-lg">
+                            {order.status === "Delivered" ? "Delivered on " : "Arriving by "}
+                          </Text>
+                          <Text className="text-emerald-600 font-black text-lg">
+                            {new Date(order.expectedDeliveryDate).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </Text>
+                        </View>
+
+                        {order.status !== "Delivered" && (
+                          <Text className="text-slate-500 text-[10px] font-medium mt-1">
+                            Your order is being processed and will reach you within 5 days of the purchase date.
+                          </Text>
+                        )}
+                      </View>
+                    </View>
+                  )}
                 </View>
 
                 {!isExpanded && (

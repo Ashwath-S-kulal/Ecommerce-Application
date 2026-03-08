@@ -23,7 +23,7 @@
       "package": "com.ashwathskulal.frontend",
       "permissions": [
         "android.permission.INTERNET",
-       "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_IMAGES",
         "android.permission.CAMERA"
       ],
       "usesCleartextTraffic": true
@@ -45,7 +45,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

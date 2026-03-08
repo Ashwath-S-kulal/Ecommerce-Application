@@ -61,6 +61,9 @@ export const createOrder = async (req, res) => {
     const tax = Number((subtotal * 0.0).toFixed(2));
     const totalAmount = subtotal + shipping + tax;
 
+    const deliveryDate = new Date();
+    deliveryDate.setDate(deliveryDate.getDate() + 5);
+
     const order = await Order.create({
       user: userId,
       products,
@@ -70,6 +73,7 @@ export const createOrder = async (req, res) => {
       tax,
       shipping,
       status: "Pending",
+      expectedDeliveryDate: deliveryDate,
     });
 
     const newOrder = await Order.create(order);
@@ -177,37 +181,32 @@ export const getOrderById = async (req, res) => {
 export const updateOrderStatusAdmin = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { status } = req.body;
+    const { status, expectedDeliveryDate } = req.body; // Accept new date
 
-    const validStatuses = [
-      "Pending",
-      "Confirmed",
-      "Shipped",
-      "Delivered",
-      "Cancelled",
-    ];
+    const validStatuses = ["Pending", "Confirmed", "Shipped", "Delivered", "Cancelled"];
 
-    if (!validStatuses.includes(status)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid status" });
+    if (status && !validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, message: "Invalid status" });
     }
+
+    // Build update object dynamically
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (expectedDeliveryDate) updateData.expectedDeliveryDate = expectedDeliveryDate;
 
     const order = await Order.findByIdAndUpdate(
       orderId,
-      { status },
-      { new: true },
+      updateData,
+      { new: true }
     );
 
     if (!order) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Order not found" });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
 
     res.status(200).json({
       success: true,
-      message: `Order status updated to ${status}`,
+      message: "Order updated successfully",
       order,
     });
   } catch (error) {

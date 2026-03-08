@@ -8,7 +8,8 @@ import axios from "axios";
 import {
     ArrowLeft, Package, MapPin, Phone, Mail,
     CreditCard, Truck, CheckCircle2, AlertTriangle,
-    XCircle, Receipt
+    XCircle, Receipt,
+    Clock
 } from "lucide-react-native";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -16,6 +17,8 @@ import Constants from "expo-constants";
 import FallbackImage from '../../../assets/Product Doesnt Exist.webp';
 import { useRef } from 'react';
 import { Animated } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker'; // Add this import
+import { Platform } from 'react-native';
 
 const Skeleton = ({ className }) => {
     const opacity = useRef(new Animated.Value(0.3)).current;
@@ -97,7 +100,9 @@ const DetailsSkeleton = () => (
     </SafeAreaView>
 );
 
-const BASE_URI = Constants.expoConfig.extra.apiUrl;
+// const BASE_URI = Constants.expoConfig.extra.apiUrl;
+const BASE_URI = "http://10.44.217.102:8000"
+
 
 export default function OrderDetailsPage() {
     const { orderId } = useLocalSearchParams();
@@ -108,8 +113,17 @@ export default function OrderDetailsPage() {
     const [refreshing, setRefreshing] = useState(false);
     const [isMounted, setIsMounted] = useState(true);
     const statuses = ["Pending", "Confirmed", "Shipped", "Delivered"];
+    const [newDate, setNewDate] = useState(null);
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
+    const onDateChange = (event, selectedDate) => {
+        // Hide picker for Android immediately; iOS usually keeps it visible in a modal context
+        if (Platform.OS === 'android') setShowDatePicker(false);
 
+        if (event.type === "set" && selectedDate) {
+            handleUpdateOrder({ date: selectedDate });
+        }
+    };
 
     useEffect(() => {
         if (orderId)
@@ -121,6 +135,12 @@ export default function OrderDetailsPage() {
         setIsMounted(true);
         return () => setIsMounted(false);
     }, []);
+
+    useEffect(() => {
+        if (order?.expectedDeliveryDate) {
+            setNewDate(new Date(order.expectedDeliveryDate));
+        }
+    }, [order]);
 
 
     const fetchOrderDetails = async () => {
@@ -174,6 +194,33 @@ export default function OrderDetailsPage() {
                 }
             ]
         );
+    };
+
+    const handleUpdateOrder = async (updatedFields) => {
+        if (updating || !isMounted) return;
+
+        setUpdating(true);
+        try {
+            const accessToken = await AsyncStorage.getItem('accessToken');
+            const response = await axios.post(
+                `${BASE_URI}/api/order/updateorderstatusadmin/${orderId}`,
+                {
+                    status: updatedFields.status || order.status,
+                    expectedDeliveryDate: updatedFields.date || newDate
+                },
+                { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+
+            if (response.data.success) {
+                Alert.alert("Success", "Order logistics updated.");
+                fetchOrderDetails();
+            }
+        } catch (err) {
+            console.error("Update failed:", err);
+            Alert.alert("Error", "Could not update order details.");
+        } finally {
+            setUpdating(false);
+        }
     };
 
     if (loading) return <DetailsSkeleton />;
@@ -318,6 +365,78 @@ export default function OrderDetailsPage() {
                     </View>
                 </View>
 
+                {/* Delivery Schedule Management */}
+                <View className="bg-white rounded-md border border-slate-100 p-6 mb-6 shadow-sm">
+                    <View className="flex-row items-center justify-between mb-6">
+                        <View className="flex-row items-center">
+                            <Truck size={18} color="#ec4899" />
+                            <Text className="ml-2 font-black uppercase text-xs tracking-widest text-slate-800">Delivery Schedule</Text>
+                        </View>
+                    </View>
+
+                    <View className="items-center py-4 bg-slate-50 rounded-md border border-slate-100 mb-6">
+                        <Text className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Expected Delivery</Text>
+                        <Text className="text-2xl font-black text-slate-900 italic">
+                            {new Date(order.expectedDeliveryDate || new Date()).toLocaleDateString('en-GB', {
+                                day: '2-digit', month: 'short', year: 'numeric'
+                            })}
+                        </Text>
+                    </View>
+
+                    <View className="flex-row gap-3">
+                        <TouchableOpacity
+                            onPress={() => {
+                                const d = new Date(order.expectedDeliveryDate || new Date());
+                                d.setDate(d.getDate() + 1);
+                                handleUpdateOrder({ date: d });
+                            }}
+                            className="flex-1 h-12 bg-white border border-slate-200 rounded-xl items-center justify-center"
+                        >
+                            <Text className="text-slate-600 font-black text-[10px] uppercase">+1 Day</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => {
+                                const d = new Date(order.expectedDeliveryDate || new Date());
+                                d.setDate(d.getDate() + 2);
+                                handleUpdateOrder({ date: d });
+                            }}
+                            className="flex-1 h-12 bg-white border border-slate-200 rounded-xl items-center justify-center"
+                        >
+                            <Text className="text-slate-600 font-black text-[10px] uppercase">+2 Day</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => {
+                                const d = new Date(order.expectedDeliveryDate || new Date());
+                                d.setDate(d.getDate() + 3);
+                                handleUpdateOrder({ date: d });
+                            }}
+                            className="flex-1 h-12 bg-white border border-slate-200 rounded-xl items-center justify-center"
+                        >
+                            <Text className="text-slate-600 font-black text-[10px] uppercase">+3 Days</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            onPress={() => setShowDatePicker(true)}
+                            className="h-12 px-3 bg-slate-900 rounded-xl items-center justify-center flex-row gap-2 active:opacity-80"
+                        >
+                            <Clock size={16} color="white" />
+                            <Text className="text-white font-black text-[9px] uppercase tracking-widest">Custom Change</Text>
+                        </TouchableOpacity>
+
+                        {showDatePicker && (
+                            <DateTimePicker
+                                value={new Date(order.expectedDeliveryDate || Date.now())}
+                                mode="date"
+                                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                onChange={onDateChange}
+                                minimumDate={new Date()} 
+                            />
+                        )}
+                    </View>
+                </View>
+
                 <View className="bg-white rounded-md border border-slate-100 p-7 mb-6 shadow-sm overflow-hidden">
                     <View className="flex-row items-center justify-between mb-8">
                         <View className="flex-row items-center">
@@ -372,8 +491,8 @@ export default function OrderDetailsPage() {
                                             onPress={() => handleUpdateStatus(step)}
                                             disabled={!!updating || isActive}
                                             className={`px-4 py-2 rounded-md border flex-row items-center justify-center min-w-[85px] ${isActive
-                                                    ? 'bg-slate-50 border-slate-100'
-                                                    : 'bg-white border-slate-900'
+                                                ? 'bg-slate-50 border-slate-100'
+                                                : 'bg-white border-slate-900'
                                                 }`}
                                         >
                                             {updating === step ? (

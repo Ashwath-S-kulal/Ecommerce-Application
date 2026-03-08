@@ -23,7 +23,7 @@ import { Feather, FontAwesome, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import Constants from "expo-constants";
 import { debounce } from "lodash"
-import { ShoppingCart, Tag } from "lucide-react-native";
+import { ShoppingCart, Tag, TagIcon, Tags } from "lucide-react-native";
 
 const { width } = Dimensions.get("window");
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
@@ -209,13 +209,18 @@ export default function Shop() {
 
 
   const ProductSkeleton = () => (
-    <View style={{ width: width * 0.45 }} className="bg-white rounded-md mb-5 p-2 border border-gray-50">
-      <View className="bg-gray-200 h-40 rounded-xl animate-pulse" />
-      <View className="p-2">
-        <View className="h-3 w-12 bg-gray-200 rounded-md mb-2 animate-pulse" />
-        <View className="h-4 w-full bg-gray-200 rounded-md mb-2 animate-pulse" />
-        <View className="h-6 w-20 bg-gray-100 rounded-md mb-3 animate-pulse" />
-        <View className="h-10 w-full bg-gray-100 rounded-md animate-pulse" />
+    <View className="bg-white mx-4 mb-4 p-4 flex-row border border-slate-50 rounded-2xl">
+      <View className="w-28 h-28 bg-slate-100 rounded-xl animate-pulse" />
+      <View className="flex-1 ml-4 justify-between">
+        <View>
+          <View className="h-4 w-3/4 bg-slate-100 rounded-lg mb-2 animate-pulse" />
+          <View className="h-3 w-1/3 bg-slate-100 rounded-lg animate-pulse" />
+        </View>
+        <View className="h-5 w-20 bg-slate-100 rounded-lg animate-pulse" />
+        <View className="flex-row gap-3 mt-2">
+          <View className="flex-1 h-10 bg-slate-50 rounded-xl animate-pulse" />
+          <View className="flex-[2] h-10 bg-slate-100 rounded-xl animate-pulse" />
+        </View>
       </View>
     </View>
   );
@@ -242,12 +247,10 @@ export default function Shop() {
             <View className="w-24 h-12 bg-gray-100 rounded-xl" />
           </View>
         </View>
-        <ScrollView showsVerticalScrollIndicator={false} className="px-4 pt-4">
-          <View className="flex-row flex-wrap justify-between">
-            {[1, 2, 3, 4, 5, 6].map((key) => (
-              <ProductSkeleton key={key} />
-            ))}
-          </View>
+        <ScrollView showsVerticalScrollIndicator={false} className="pt-4">
+          {[1, 2, 3, 4,5,6,7,8].map((key) => (
+            <ProductSkeleton key={key} />
+          ))}
         </ScrollView>
       </SafeAreaView>
     );
@@ -346,7 +349,7 @@ export default function Shop() {
             contentContainerStyle={{ paddingBottom: 100 }}
             onTouchStart={() => setShowSuggestions(false)}
           >
-            <View className="flex-row flex-wrap justify-between px-0.5">
+            <View>
               {displayProducts.length > 0 ? (
                 displayProducts.map((item) => (
                   <ProductCard
@@ -423,76 +426,72 @@ const ProductCard = ({
   isAddingToCart,
   isWishlistLoading
 }) => (
-  <View
-    style={{ width: (width - 48) / 2 }}
-    className="bg-white rounded-md mb-6 overflow-hidden shadow-md border-2 border-slate-200/50"
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.9}
+    className="bg-/50 flex-row border-b-4 border-slate-100 p-4 pt-10"
   >
-    <View className="relative bg-white h-44 items-center justify-center border-b-2 border-slate-200/50">
-      <TouchableOpacity onPress={onPress} activeOpacity={0.9} className="w-full h-full p-5 ">
-        <Image
-          source={{ uri: item?.productImg?.[0]?.url }}
-          className="w-full h-full"
-          resizeMode="contain"
-        />
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        onPress={onWishlist}
-        disabled={isWishlistLoading}
-        className="absolute top-3 right-3 p-2.5 bg-white shadow-sm rounded-full backdrop-blur-md border border-white/20"
-      >
-        {isWishlistLoading ? (
-          <ActivityIndicator size="small" color="#f43f5e" />
-        ) : (
-          <FontAwesome
-            name={isInWishlist ? "heart" : "heart-o"}
-            size={18}
-            color={isInWishlist ? "#f43f5e" : "#94a3b8"}
-          />
-        )}
-      </TouchableOpacity>
+    <View className="w-32 h-32 bg-slate-50 rounded-xl overflow-hidden">
+      <Image
+        source={{ uri: item?.productImg?.[0]?.url }}
+        className="w-full h-full"
+        resizeMode="cover"
+      />
     </View>
+    <View className="flex-1 ml-4 justify-between">
+      <View>
+        <View className="flex-row justify-between items-start">
+          <View className="flex-1">
+            <Text numberOfLines={1} className="text-md font-bold text-slate-900">
+              {item.productName}
+            </Text>
+            <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+              {item.brand || "Premium"}
+            </Text>
+          </View>
+          <TouchableOpacity onPress={onWishlist} disabled={isWishlistLoading} className="p-5">
+            {isWishlistLoading ? (
+              <ActivityIndicator size="small" color="#000" />
+            ) : (
+              <FontAwesome
+                name={isInWishlist ? "heart" : "heart-o"}
+                size={20}
+                color={isInWishlist ? "#ef4444" : "#cbd5e1"}
+              />
+            )}
+          </TouchableOpacity>
+        </View>
 
-    <View className="px-4 py-3 bg-slate-50/50">
-      <Text numberOfLines={1} className="text-[9px] font-black text-slate-400 uppercase tracking-[1.5px]">
-        {item.brand || "Premium"}
-      </Text>
+        <Text className="text-lg font-black text-black mt-1">
+          ₹{item.productPrice.toLocaleString()}
+        </Text>
+      </View>
 
-      <Text numberOfLines={1} className="text-[13px] font-semibold text-slate-900 mt-1">
-        {item.productName}
-      </Text>
-
-      <Text className="text-base font-black text-black mt-1.5">
-        ₹{item.productPrice.toLocaleString()}
-      </Text>
-
-      <View className="flex-row gap-2 mt-4">
-        {/* Add to Cart with Loading */}
+      <View className="flex-row gap-5">
         <TouchableOpacity
           onPress={onAddToCart}
           disabled={isAddingToCart}
-          className="w-11 h-11 bg-white rounded-md items-center justify-center border-2 border-slate-200"
+          className="flex-1 h-10 rounded-md items-center justify-center border border-slate-200 bg-white"
         >
           {isAddingToCart ? (
-            <ActivityIndicator size="small" color="#0F172A" />
+            <ActivityIndicator size="small" color="#000" />
           ) : (
-            <ShoppingCart size={17} color="#0F172A" strokeWidth={2.5} />
+            <ShoppingCart size={16} color="#000" />
           )}
         </TouchableOpacity>
 
-        {/* Buy Now */}
         <TouchableOpacity
           onPress={onBuyNow}
-          className="flex-1 h-11 rounded-md flex-row items-center justify-center border-2 border-slate-200"
+          className="flex-[2] h-10 bg-slate-900 rounded-lg flex-row items-center justify-center shadow-sm gap-2"
         >
-          <Tag size={17} strokeWidth={2.5} color="black" />
-          <Text className="text-black text-[11px] font-[900] ml-2 tracking-wider">
+          <Tag size={13} color="white" />
+          <Text className="text-[11px] font-black text-white">
             Buy Now
           </Text>
         </TouchableOpacity>
       </View>
     </View>
-  </View>
+  </TouchableOpacity>
 );
 
 

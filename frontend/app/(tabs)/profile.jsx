@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, Image, ScrollView, TextInput,
   ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Animated,
@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../redux/userSlice';
 import axios from 'axios';
 import { Camera, User, MapPin, Phone, Mail, Save, X, LogOut, Box, Heart, Ticket, Headphones, AmpersandIcon, LayoutDashboard, MailCheckIcon } from 'lucide-react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import Constants from "expo-constants";
@@ -48,6 +48,30 @@ export default function Profile() {
     ? [{ uri: updateUser.profilePic }]
     : [];
 
+
+  const fetchUserProfile = useCallback(async () => {
+    if (!user?._id) return;
+    try {
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      const res = await axios.get(`${BASE_URL}/api/user/getuserbyid/${user._id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (res.data.success) {
+        dispatch(setUser(res.data.user)); 
+      }
+    } catch (e) {
+      console.error("Failed to fetch fresh user profile", e);
+    }
+  }, [user?._id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUserProfile();
+    }, [fetchUserProfile])
+  );
+
+
+  
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -167,7 +191,7 @@ export default function Profile() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 
           <ScrollView className="px-4">
-            <View className="bg-white rounded-md p-5 mt-6 border border-slate-100 shadow-sm">
+            <View className=" rounded-md p-5 mt-6">
               <View className="flex-row items-center justify-between mb-6">
                 <View className="flex-row items-center flex-1">
                   <View className="relative">
@@ -238,7 +262,7 @@ export default function Profile() {
               </View>
             </View>
             <View className="gap-y-4 mt-5">
-              <View className="bg-white p-6 rounded-md border border-slate-100 shadow-sm mb-5">
+              <View className="bg-white p-6 mx-5 rounded-xl border border-slate-100 shadow-sm mb-5">
                 <View className="flex-row items-center mb-5 border-b border-slate-50 pb-3">
                   <User size={16} color="#94a3b8" />
                   <Text className="ml-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Basic Info</Text>
@@ -263,7 +287,7 @@ export default function Profile() {
                 </View>
                 <View>
                   <Text className="text-[10px] font-bold text-slate-400 mb-1.5">Phone</Text>
-                  <View className="bg-slate-50 p-4 rounded-xl flex-row items-center">
+                  <View className="bg-slate-50 p-4 py-2 rounded-xl flex-row items-center">
                     <Phone size={16} color="#cbd5e1" />
                     <TextInput
                       value={updateUser.phoneNo}
@@ -276,7 +300,7 @@ export default function Profile() {
 
                 <View>
                   <Text className="text-[10px] font-bold text-slate-400 mb-1.5 mt-3">Email</Text>
-                  <View className="bg-slate-50 p-4 rounded-xl flex-row items-center">
+                  <View className="bg-slate-50 p-4 py-2 rounded-xl flex-row items-center">
                     <MailCheckIcon size={16} color="#cbd5e1" />
                     <TextInput
                       value={updateUser.email}
@@ -317,7 +341,7 @@ export default function Profile() {
                   onPress={handleSubmit}
                   className="flex-[2] bg-slate-900 py-4 px-8 rounded-xl flex-row items-center justify-center mt-10 w-40 self-end active:opacity-80"
                 >
-                  {loading ? <ActivityIndicator size="small" color="white" /> : <Save size={18} color="white" />}
+                  {loading ? <ActivityIndicator size="small" color="white" /> : <Save size={16} color="white" />}
                   <Text className="text-white font-bold ml-2">{loading ? "Updating..." : "Save Changes"}</Text>
                 </TouchableOpacity>
               </View>
