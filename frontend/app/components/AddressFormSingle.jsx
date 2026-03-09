@@ -41,8 +41,7 @@ export default function AddressForm() {
     const { productId, buyNow } = useLocalSearchParams();
     const router = useRouter();
     const dispatch = useDispatch();
-    // const BASE_URL = Constants.expoConfig.extra.apiUrl;
-  const BASE_URL = "http://10.44.217.102:8000"
+    const BASE_URL = Constants.expoConfig.extra.apiUrl;
     const { cart, addresses, selectedAddress, products } = useSelector((store) => store.product);
     const { user } = useSelector((store) => store.user);
     const [formData, setFormData] = useState({

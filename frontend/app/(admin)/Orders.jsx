@@ -17,8 +17,7 @@ import { Dropdown } from 'react-native-element-dropdown';
 import Constants from "expo-constants";
 import FallbackImage from '../../assets/Product Doesnt Exist.webp';
 
-// const BASE_URL = Constants.expoConfig.extra.apiUrl;
-  const BASE_URL = "http://10.44.217.102:8000"
+const BASE_URL = Constants.expoConfig.extra.apiUrl;
 const ShowUserOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);

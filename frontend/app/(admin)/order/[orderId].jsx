@@ -100,8 +100,7 @@ const DetailsSkeleton = () => (
     </SafeAreaView>
 );
 
-// const BASE_URI = Constants.expoConfig.extra.apiUrl;
-const BASE_URI = "http://10.44.217.102:8000"
+const BASE_URI = Constants.expoConfig.extra.apiUrl;
 
 
 export default function OrderDetailsPage() {
@@ -376,7 +375,7 @@ export default function OrderDetailsPage() {
 
                     <View className="items-center py-4 bg-slate-50 rounded-md border border-slate-100 mb-6">
                         <Text className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Expected Delivery</Text>
-                        <Text className="text-2xl font-black text-slate-900 italic">
+                        <Text className="text-2xl font-black text-slate-900 italic" numberOfLines={1}>
                             {new Date(order.expectedDeliveryDate || new Date()).toLocaleDateString('en-GB', {
                                 day: '2-digit', month: 'short', year: 'numeric'
                             })}

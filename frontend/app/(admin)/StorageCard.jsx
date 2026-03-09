@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, ScrollView, RefreshControl, Dimensions, Linking, TouchableOpacity } from 'react-native';
 import { Database, Cloud, AlertTriangle, CheckCircle2, Image as ImageIcon, ExternalLink } from 'lucide-react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from "expo-constants";
+import { useFocusEffect } from '@react-navigation/native'; 
 
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
@@ -27,6 +28,12 @@ export default function AdminSystemStats() {
       setRefreshing(false);
     }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchStats();
+    }, [])
+  );
 
   useEffect(() => { fetchStats(); }, []);
 

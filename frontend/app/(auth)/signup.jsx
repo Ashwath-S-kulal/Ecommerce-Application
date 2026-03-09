@@ -20,6 +20,7 @@ import {
 import { useRouter } from "expo-router";
 import axios from "axios";
 import Constants from "expo-constants";
+import { LinearGradient } from "expo-linear-gradient";
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
@@ -125,7 +126,18 @@ export default function SignUp() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white sm:bg-[#fdf2f8]">
+    <View className="flex-1 bg-white sm:bg-[#fdf2f8]">
+      <LinearGradient
+        colors={['#FD8CD5', '#db2777']}
+        className="flex-1 p-6 max-h-[250px] pt-20"
+      >
+        <ScrollView showsVerticalScrollIndicator={false} className="">
+          <Text className="text-white text-2xl font-black mb-4 self-center">Sanjeevini Group Avarse</Text>
+          <Text className="text-white/90 text-base leading-6 mb-6 flex-1 text-justify px-1">
+            Sanjeevini - Karnataka State Rural Livelihood Promotion Society (KSRLPS) was launched on December 2, 2011, to implement the National Rural Livelihood Mission (NRLM) successfully. Its mission is to alleviate rural poverty through sustainable income generation and self-employment. Currently, it supports over 2.8 million rural women across the state.
+          </Text>
+        </ScrollView>
+      </LinearGradient>
       <KeyboardAvoidingView
         behavior={Platform.OS === "android" || "ios" ? "padding" : "height"}
         className="flex-1"
@@ -137,7 +149,7 @@ export default function SignUp() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
           >
-            <View className="px-6 py-10">
+            <View className="bg-white p-8 rounded-[32px] shadow-2xl mx-6">
               <View className="bg-white sm:border sm:border-gray-100 sm:rounded-[32px] sm:shadow-xl p-2">
                 <View className="items-center mb-8">
                   <Text className="text-3xl font-black text-gray-900" numberOfLines={1}>
@@ -213,7 +225,7 @@ export default function SignUp() {
                           value={formData.confirmPassword}
                           onChangeText={(val) => setFormData({ ...formData, confirmPassword: val })}
                           className={`bg-gray-50 border rounded-2xl h-14 px-4 text-gray-800 ${formData.confirmPassword && formData.password !== formData.confirmPassword
-                              ? "border-red-300" : "border-gray-100"
+                            ? "border-red-300" : "border-gray-100"
                             }`}
                         />
                       </View>
@@ -269,12 +281,12 @@ export default function SignUp() {
                   </TouchableOpacity>
 
                   {/* Footer */}
-                  <View className="flex-row justify-center items-center py-6">
+                  <TouchableOpacity onPress={() => router.push("/login")} className="flex-row justify-center items-center py-6">
                     <Text className="text-sm text-gray-500 font-medium" numberOfLines={1}>Already have an account.?</Text>
-                    <TouchableOpacity onPress={() => router.push("/login")}>
-                      <Text className="ml-2 text-pink-600 font-black text-sm" numberOfLines={1}>Log In</Text>
+                    <TouchableOpacity >
+                      <Text className="ml-2 text-pink-600 font-black text-base" numberOfLines={1}>Log In</Text>
                     </TouchableOpacity>
-                  </View>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -300,6 +312,6 @@ export default function SignUp() {
           </Animated.View>
         ) : null}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }

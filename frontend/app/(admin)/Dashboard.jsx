@@ -160,16 +160,16 @@ const AdminDashboard = () => {
       >
         <View className="mt-6 mb-6">
           <Text className="text-xl font-bold text-slate-900">Admin Dashboard</Text>
-          <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sanjeevini Command</Text>
+          <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage Sanjeevini Products</Text>
         </View>
 
-        <View className="flex-row flex-wrap justify-between mb-4">
+        <View className="flex-row flex-wrap justify-center gap-4 mb-4">
           {navItems.map((item) => (
             <TouchableOpacity
               key={item.to}
               onPress={() => router.push(item.to)}
               style={{ width: width * 0.44 }}
-              className="bg-white border border-slate-100 rounded-md p-4 mb-4 shadow-sm flex-row items-center gap-3"
+              className="bg-white border border-slate-100 rounded-md p-4 shadow-sm flex-row items-center gap-3"
             >
               <View className={`w-10 h-10 rounded-full ${item.color} items-center justify-center`}>
                 {item.icon}
@@ -296,12 +296,12 @@ const AdminSkeleton = () => (
       <View className="h-7 w-48 bg-slate-200 rounded-md mb-2" />
       <View className="h-3 w-32 bg-slate-100 rounded-sm" />
     </View>
-    <View className="flex-row flex-wrap justify-between mb-4">
+    <View className="flex-row flex-wrap justify-center gap-4 mb-4">
       {[1, 2, 3, 4].map((i) => (
         <View
           key={i}
           style={{ width: width * 0.44 }}
-          className="bg-white border border-slate-100 rounded-md p-4 mb-4 flex-row items-center gap-3"
+          className="bg-white border border-slate-100 rounded-md p-4 flex-row items-center gap-3"
         >
           <View className="w-10 h-10 rounded-full bg-slate-100" />
           <View className="h-3 w-16 bg-slate-100 rounded" />

@@ -30,7 +30,7 @@ export default function TabsLayout() {
   const protectTab = (e) => {
     if (!user) {
       e.preventDefault();
-      router.push("/(auth)/login");
+      router.push("/components/new");
     }
   };
 
@@ -106,7 +106,6 @@ export default function TabsLayout() {
       />
 
       <Tabs.Screen name="(auth)" options={{ href: null }} />
-      <Tabs.Screen name="SearchResults" options={{ href: null }} />
     </Tabs>
   );
 }

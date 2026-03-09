@@ -191,9 +191,9 @@ export default function Shop() {
 
 
   const addToCart = async (productId) => {
-    setActionLoading({ id: productId, type: 'cart' });
     const token = await AsyncStorage.getItem("accessToken");
     if (!token) return Alert.alert("Login Required", "Please login.");
+    setActionLoading({ id: productId, type: 'cart' });
     try {
       const res = await axios.post(`${BASE_URL}/api/cart/add`, { productId }, { headers: { Authorization: `Bearer ${token}` } });
       if (res.data.success) {

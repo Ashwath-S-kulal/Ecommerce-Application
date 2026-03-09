@@ -20,8 +20,8 @@ export default function ShowUserOrders() {
   const [loading, setLoading] = useState(true);
   const [expandedOrders, setExpandedOrders] = useState({});
 
-  // const BASE_URL = Constants.expoConfig.extra.apiUrl;
-  const BASE_URL = "http://10.44.217.102:8000"
+  const BASE_URL = Constants.expoConfig.extra.apiUrl;
+  // const BASE_URL = "http://10.44.217.102:8000"
 
   useEffect(() => {
     fetchOrders();

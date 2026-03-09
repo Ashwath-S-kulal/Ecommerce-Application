@@ -10,12 +10,13 @@ import * as ImagePicker from 'expo-image-picker';
 import { useDispatch, useSelector } from 'react-redux';
 import { setUser } from '../../redux/userSlice';
 import axios from 'axios';
-import { Camera, User, MapPin, Phone, Mail, Save, X, LogOut, Box, Heart, Ticket, Headphones, AmpersandIcon, LayoutDashboard, MailCheckIcon } from 'lucide-react-native';
+import { Camera, User, MapPin, Phone, Mail, Save, X, LogOut, Box, Heart, Ticket, Headphones, AmpersandIcon, LayoutDashboard, MailCheckIcon, ChevronRight, Edit3, Hash, Navigation, ImageUp } from 'lucide-react-native';
 import { router, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 import Constants from "expo-constants";
 import ImageViewing from "react-native-image-viewing";
+import { setCart, setNotifications, setSelectedAddress, setWishlist } from '../../redux/productSlice';
 
 
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
@@ -27,7 +28,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
   const fadeAnim = useRef(new Animated.Value(0)).current;
-
+  const [isEditing, setIsEditing] = useState(false);
   const [updateUser, setUpdateUser] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
@@ -44,9 +45,9 @@ export default function Profile() {
 
   const [visible, setIsVisible] = useState(false);
 
-  const images = updateUser.profilePic
-    ? [{ uri: updateUser.profilePic }]
-    : [];
+  const images = [
+    { uri: file ? file.uri : updateUser.profilePic } // Viewer shows the temporary file if it exists
+  ];
 
 
   const fetchUserProfile = useCallback(async () => {
@@ -57,7 +58,7 @@ export default function Profile() {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       if (res.data.success) {
-        dispatch(setUser(res.data.user)); 
+        dispatch(setUser(res.data.user));
       }
     } catch (e) {
       console.error("Failed to fetch fresh user profile", e);
@@ -71,7 +72,7 @@ export default function Profile() {
   );
 
 
-  
+
   const handleLogout = () => {
     Alert.alert(
       "Logout",
@@ -85,6 +86,10 @@ export default function Profile() {
             try {
               await AsyncStorage.removeItem("accessToken");
               dispatch(setUser(null));
+              dispatch(setCart({ items: [], totalPrice: 0 }));
+              dispatch(setWishlist({ items: [] }));
+              dispatch(setNotifications([]));
+              dispatch(setSelectedAddress(null));
               router.replace("/(auth)/login");
             } catch (e) {
               console.error("Logout Error", e);
@@ -172,6 +177,7 @@ export default function Profile() {
       if (res.data.success) {
         dispatch(setUser(res.data.user));
         setFile(null);
+        setIsVisible(false);
         setToastMsg("PROFILE UPDATED");
       }
     } catch (error) {
@@ -179,9 +185,47 @@ export default function Profile() {
       Toast.show({ type: 'error', text1: 'Update Failed' });
     } finally {
       setLoading(false);
+      setIsEditing(false)
     }
   };
 
+
+  const ProfileViewerFooter = ({ file, handleFileChange, handleSubmit, loading, removeImage }) => (
+    <View className="absolute bottom-10 left-6 right-6">
+      <View className="bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-3xl shadow-2xl">
+        {file ? (
+          <View className="flex-row gap-3">
+            <TouchableOpacity
+              onPress={removeImage}
+              className="flex-1 bg-white/20 py-4 rounded-2xl items-center active:opacity-70"
+            >
+              <Text className="text-white font-bold tracking-wide">Discard</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={handleSubmit}
+              disabled={loading}
+              className="flex-1 bg-emerald-500 py-4 rounded-2xl items-center shadow-lg shadow-emerald-500/30 active:opacity-90"
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-bold tracking-wide">Save Changes</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={handleFileChange}
+            className="bg-white py-4 rounded-2xl items-center shadow-lg active:scale-[0.98] transition-transform"
+          >
+            <Text className="text-slate-900 font-bold tracking-wide uppercase text-xs" numberOfLines={1}>Update Profile Picture</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
+
+  
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]">
       <KeyboardAvoidingView
@@ -195,7 +239,7 @@ export default function Profile() {
               <View className="flex-row items-center justify-between mb-6">
                 <View className="flex-row items-center flex-1">
                   <View className="relative">
-                    <View className="w-20 h-20 rounded-full overflow-hidden border-2 border-slate-50 bg-slate-100">
+                    <View className="w-20 h-20 rounded-3xl overflow-hidden border-2 border-slate-100 bg-slate-100 shadow-xl">
                       <TouchableOpacity onPress={() => setIsVisible(true)}>
                         <Image
                           source={{ uri: updateUser.profilePic || "https://cdn.pixabay.com/photo/2023/02/18/11/00/icon-7797704_640.png" }}
@@ -203,20 +247,29 @@ export default function Profile() {
                           resizeMode="cover"
                         />
                       </TouchableOpacity>
-                      <ImageViewing
-                        images={images}
-                        visible={visible}
-                        onRequestClose={() => setIsVisible(false)}
-                      />
 
+                      <ImageViewing
+                        images={[{ uri: file ? file.uri : updateUser.profilePic }]}
+                        visible={visible}
+                        onRequestClose={() => {
+                          setIsVisible(false);
+                          if (!loading) {
+                            removeImage();
+                          }
+                        }}
+                        FooterComponent={() => (
+                          <ProfileViewerFooter
+                            file={file}
+                            handleFileChange={handleFileChange}
+                            handleSubmit={handleSubmit}
+                            loading={loading}
+                            removeImage={removeImage}
+                          />
+                        )}
+                      />
                     </View>
-                    <TouchableOpacity
-                      onPress={file ? removeImage : handleFileChange}
-                      className={`absolute -bottom-1 -right-1 p-1.5 rounded-full border-2 border-white shadow-sm ${file ? 'bg-red-500' : 'bg-slate-900'}`}
-                    >
-                      {file ? <X size={12} color="white" /> : <Camera size={14} color="white" />}
-                    </TouchableOpacity>
                   </View>
+
 
                   <View className="ml-4 flex-shrink">
                     <Text className="text-xl font-black text-slate-900 leading-tight" numberOfLines={1}>
@@ -261,90 +314,132 @@ export default function Profile() {
                 )}
               </View>
             </View>
-            <View className="gap-y-4 mt-5">
-              <View className="bg-white p-6 mx-5 rounded-xl border border-slate-100 shadow-sm mb-5">
-                <View className="flex-row items-center mb-5 border-b border-slate-50 pb-3">
-                  <User size={16} color="#94a3b8" />
-                  <Text className="ml-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Basic Info</Text>
-                </View>
-                <View className="flex-row gap-x-3 mb-4">
-                  <View className="flex-1">
-                    <Text className="text-[10px] font-bold text-slate-400 mb-1.5">First Name</Text>
-                    <TextInput
-                      value={updateUser.firstName}
-                      onChangeText={(val) => setUpdateUser({ ...updateUser, firstName: val })}
-                      className="bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
-                    />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-[10px] font-bold text-slate-400 mb-1.5">Last Name</Text>
-                    <TextInput
-                      value={updateUser.lastName}
-                      onChangeText={(val) => setUpdateUser({ ...updateUser, lastName: val })}
-                      className="bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
-                    />
-                  </View>
-                </View>
-                <View>
-                  <Text className="text-[10px] font-bold text-slate-400 mb-1.5">Phone</Text>
-                  <View className="bg-slate-50 p-4 py-2 rounded-xl flex-row items-center">
-                    <Phone size={16} color="#cbd5e1" />
-                    <TextInput
-                      value={updateUser.phoneNo}
-                      keyboardType="phone-pad"
-                      onChangeText={(val) => setUpdateUser({ ...updateUser, phoneNo: val })}
-                      className="ml-3 flex-1 font-semibold text-slate-900"
-                    />
-                  </View>
-                </View>
 
-                <View>
-                  <Text className="text-[10px] font-bold text-slate-400 mb-1.5 mt-3">Email</Text>
-                  <View className="bg-slate-50 p-4 py-2 rounded-xl flex-row items-center">
-                    <MailCheckIcon size={16} color="#cbd5e1" />
-                    <TextInput
-                      value={updateUser.email}
-                      className="ml-3 flex-1 font-semibold text-slate-400"
-                      editable={false}
-                    />
-                  </View>
-                </View>
 
-                <View className="flex-row items-center mb-5 mt-10 border-b border-slate-50 pb-3">
-                  <MapPin size={16} color="#94a3b8" />
-                  <Text className="ml-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Delivery Location</Text>
-                </View>
-                <TextInput
-                  placeholder="Street Address"
-                  value={updateUser.address}
-                  onChangeText={(val) => setUpdateUser({ ...updateUser, address: val })}
-                  className="bg-slate-50 p-4 rounded-xl font-semibold text-slate-900 mb-4"
-                />
-                <View className="flex-row gap-x-3">
-                  <TextInput
-                    placeholder="City"
-                    value={updateUser.city}
-                    onChangeText={(val) => setUpdateUser({ ...updateUser, city: val })}
-                    className="flex-1 bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
-                  />
-                  <TextInput
-                    placeholder="Zip Code"
-                    value={updateUser.zipCode}
-                    onChangeText={(val) => setUpdateUser({ ...updateUser, zipCode: val })}
-                    keyboardType="numeric"
-                    className="flex-1 bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
-                  />
-                </View>
-
+            <View className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-10">
+              <View className="flex-row justify-between items-center mb-8">
+                <Text className="text-lg font-black text-slate-900">Profile Details</Text>
                 <TouchableOpacity
-                  disabled={loading}
-                  onPress={handleSubmit}
-                  className="flex-[2] bg-slate-900 py-4 px-8 rounded-xl flex-row items-center justify-center mt-10 w-40 self-end active:opacity-80"
+                  onPress={() => setIsEditing(!isEditing)}
+                  activeOpacity={0.7}
+                  className={`flex-row items-center px-4 py-2.5 rounded-md border ${isEditing
+                    ? 'bg-rose-50 border-rose-100'
+                    : 'bg-indigo-50 border-indigo-100'
+                    }`}
                 >
-                  {loading ? <ActivityIndicator size="small" color="white" /> : <Save size={16} color="white" />}
-                  <Text className="text-white font-bold ml-2">{loading ? "Updating..." : "Save Changes"}</Text>
+                  {isEditing ? (
+                    <>
+                      <X size={16} color="#ef4444" />
+                      <Text className="ml-2 font-black text-[12px] text-rose-600 uppercase tracking-tight">
+                        Cancel
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Edit3 size={16} color="#4f46e5" />
+                      <Text className="ml-2 font-black text-[12px] text-indigo-600 uppercase tracking-tight">
+                        Edit Profile
+                      </Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
+
+              {isEditing ? (
+                <View className="gap-y-4">
+                  <View className="bg-white p-3 rounded-xl border-t border-slate-100 mb-5">
+
+                    <View className="flex-row gap-x-3 mb-4">
+                      <View className="flex-1">
+                        <Text className="text-[10px] font-bold text-slate-400 mb-1.5">First Name</Text>
+                        <TextInput
+                          value={updateUser.firstName}
+                          onChangeText={(val) => setUpdateUser({ ...updateUser, firstName: val })}
+                          className="bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
+                        />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-[10px] font-bold text-slate-400 mb-1.5">Last Name</Text>
+                        <TextInput
+                          value={updateUser.lastName}
+                          onChangeText={(val) => setUpdateUser({ ...updateUser, lastName: val })}
+                          className="bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
+                        />
+                      </View>
+                    </View>
+                    <View>
+                      <Text className="text-[10px] font-bold text-slate-400 mb-1.5">Phone</Text>
+                      <View className="bg-slate-50 p-4 py-2 rounded-xl flex-row items-center">
+                        <Phone size={16} color="#cbd5e1" />
+                        <TextInput
+                          value={updateUser.phoneNo}
+                          keyboardType="phone-pad"
+                          onChangeText={(val) => setUpdateUser({ ...updateUser, phoneNo: val })}
+                          className="ml-3 flex-1 font-semibold text-slate-900"
+                        />
+                      </View>
+                    </View>
+
+                    <View>
+                      <Text className="text-[10px] font-bold text-slate-400 mb-1.5 mt-3">Email</Text>
+                      <View className="bg-slate-50 p-4 py-2 rounded-xl flex-row items-center">
+                        <MailCheckIcon size={16} color="#cbd5e1" />
+                        <TextInput
+                          value={updateUser.email}
+                          className="ml-3 flex-1 font-semibold text-slate-400"
+                          editable={false}
+                        />
+                      </View>
+                    </View>
+
+                    <View className="flex-row items-center mb-5 mt-10 border-b border-slate-50 pb-3">
+                      <MapPin size={16} color="#94a3b8" />
+                      <Text className="ml-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Delivery Location</Text>
+                    </View>
+                    <TextInput
+                      placeholder="Street Address"
+                      value={updateUser.address}
+                      onChangeText={(val) => setUpdateUser({ ...updateUser, address: val })}
+                      className="bg-slate-50 p-4 rounded-xl font-semibold text-slate-900 mb-4"
+                    />
+                    <View className="flex-row gap-x-3">
+                      <TextInput
+                        placeholder="City"
+                        value={updateUser.city}
+                        onChangeText={(val) => setUpdateUser({ ...updateUser, city: val })}
+                        className="flex-1 bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
+                      />
+                      <TextInput
+                        placeholder="Zip Code"
+                        value={updateUser.zipCode}
+                        onChangeText={(val) => setUpdateUser({ ...updateUser, zipCode: val })}
+                        keyboardType="numeric"
+                        className="flex-1 bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
+                      />
+                    </View>
+
+                    <TouchableOpacity
+                      disabled={loading}
+                      onPress={handleSubmit}
+                      className="flex-[2] bg-slate-900 py-4 px-8 rounded-xl flex-row items-center justify-center mt-10 w-40 self-end active:opacity-80"
+                    >
+                      {loading ? <ActivityIndicator size="small" color="white" /> : <Save size={16} color="white" />}
+                      <Text className="text-white font-bold ml-2">{loading ? "Updating..." : "Save Changes"}</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+              ) : (
+                <View>
+                  <DisplayField label="First Name" value={user?.firstName} icon={User} />
+                  <DisplayField label="Last Name" value={user?.lastName} icon={User} />
+                  <DisplayField label="Contact Number" value={user?.phoneNo} icon={Phone} />
+                  <DisplayField label="Email Address" value={user?.email} icon={MailCheckIcon} />
+                  <DisplayField label="Residential Address" value={user?.address} icon={MapPin} />
+                  <DisplayField label="City" value={`${user?.city || ''}`} icon={Navigation} />
+                  <DisplayField label="Zip" value={`${user?.zipCode || ''}`} icon={Hash} />
+                </View>
+              )}
             </View>
 
             {toastMsg ? (
@@ -365,3 +460,20 @@ export default function Profile() {
     </SafeAreaView>
   );
 }
+const DisplayField = ({ label, value, icon: Icon }) => (
+  <View className="flex-row items-center p-4 py-3 bg-white rounded-2xl border border-slate-100 mb-3 shadow-sm shadow-slate-200">
+    <View className="w-10 h-10 rounded-2xl bg-indigo-50 items-center justify-center">
+      <Icon size={18} color="#4f46e5" />
+    </View>
+    <View className="ml-4 flex-1">
+      <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
+        {label}
+      </Text>
+      <Text className="text-[15px] font-bold text-slate-800">
+        {value || "Not provided"}
+      </Text>
+    </View>
+  </View>
+);
+
+
