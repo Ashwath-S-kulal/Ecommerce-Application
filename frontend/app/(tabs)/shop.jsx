@@ -440,7 +440,7 @@ const ProductCard = ({
     </View>
     <View className="flex-1 ml-4 justify-between">
       <View>
-        <View className="flex-row justify-between items-start">
+        <View className="flex-row justify-start items-center">
           <View className="flex-1">
             <Text numberOfLines={1} className="text-md font-bold text-slate-900">
               {item.productName}
@@ -449,7 +449,7 @@ const ProductCard = ({
               {item.brand || "Premium"}
             </Text>
           </View>
-          <TouchableOpacity onPress={onWishlist} disabled={isWishlistLoading} className="p-5">
+          <TouchableOpacity onPress={onWishlist} disabled={isWishlistLoading} className="p-5 pb-0">
             {isWishlistLoading ? (
               <ActivityIndicator size="small" color="#000" />
             ) : (
@@ -462,7 +462,7 @@ const ProductCard = ({
           </TouchableOpacity>
         </View>
 
-        <Text className="text-lg font-black text-black mt-1">
+        <Text className="text-xl font-black text-black mt-1">
           ₹{item.productPrice.toLocaleString()}
         </Text>
       </View>
@@ -532,7 +532,7 @@ const PriceSlider = ({ value, max, onValueChange }) => {
 
 const FilterModal = ({ visible, onClose, onReset, categories, brands, selectedCategory, setSelectedCategory, selectedBrand, setSelectedBrand, priceLimit, setPriceLimit, maxPrice }) => (
   <Modal visible={visible} animationType="slide" transparent>
-    <View className="flex-1 justify-end bg-black/30">
+    <View className="flex-1 justify-end bg-black/20">
       <Pressable className="flex-1" onPress={onClose} />
       <View className="bg-white rounded-t-[30px] p-8 shadow-2xl">
         <View className="flex-row justify-between items-center mb-8">
@@ -585,6 +585,7 @@ const FilterModal = ({ visible, onClose, onReset, categories, brands, selectedCa
     </View>
   </Modal>
 );
+
 
 
 const FilterPill = ({ label, onClear }) => (

@@ -12,17 +12,15 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   Keyboard,
+  Image,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Eye, EyeOff, Mail, Timer, RotateCcw
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import axios from "axios";
 import Constants from "expo-constants";
-import { LinearGradient } from "expo-linear-gradient";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
 export default function SignUp() {
@@ -126,35 +124,49 @@ export default function SignUp() {
   };
 
   return (
-    <View className="flex-1 bg-white sm:bg-[#fdf2f8]">
-      <LinearGradient
-        colors={['#FD8CD5', '#db2777']}
-        className="flex-1 p-6 max-h-[250px] pt-20"
-      >
-        <ScrollView showsVerticalScrollIndicator={false} className="">
-          <Text className="text-white text-2xl font-black mb-4 self-center">Sanjeevini Group Avarse</Text>
-          <Text className="text-white/90 text-base leading-6 mb-6 flex-1 text-justify px-1">
-            Sanjeevini - Karnataka State Rural Livelihood Promotion Society (KSRLPS) was launched on December 2, 2011, to implement the National Rural Livelihood Mission (NRLM) successfully. Its mission is to alleviate rural poverty through sustainable income generation and self-employment. Currently, it supports over 2.8 million rural women across the state.
-          </Text>
-        </ScrollView>
-      </LinearGradient>
+    <View className="flex-1 bg-white">
+
+      <View className="absolute top-0 left-0 w-full h-full bg-slate-50" />
+      <View className="absolute bottom-0 right-0 w-full h-full bg-slate-50" />
+      <View className="absolute -top-20 -right-20 w-80 h-80 bg-pink-100 rounded-full blur-[60px] opacity-60" />
+      <View className="absolute top-1/2 -left-20 w-60 h-60 bg-blue-50 rounded-full blur-[60px] opacity-40" />
+
       <KeyboardAvoidingView
-        behavior={Platform.OS === "android" || "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "android" ? "padding" : "padding"}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-
           <ScrollView
-            showsVerticalScrollIndicator={false}
             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+            showsVerticalScrollIndicator={false}
           >
+
+            <View className="items-center mb-10 mt-12">
+              <TouchableOpacity onPress={() => router.push("/")}
+                className="w-28 h-28 bg-white rounded-[32px] items-center justify-center shadow-xl shadow-pink-200 border border-slate-100 mb-6">
+                <Image
+                  source={require('../../assets/logo_bg_rmv.png')}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+              <Text className="text-slate-900 text-4xl font-extrabold tracking-tighter" numberOfLines={1}>Sanjeevini Group Avarse</Text>
+              <View className="flex-row items-center mt-2">
+                <View className="w-8 h-[2px] bg-pink-500/30 mr-2" />
+                <Text className="text-slate-400 text-xs font-bold uppercase tracking-[3px]">Rural Livelihood</Text>
+                <View className="w-8 h-[2px] bg-pink-500/30 ml-2" />
+              </View>
+            </View>
+
+
+
             <View className="bg-white p-8 rounded-[32px] shadow-2xl mx-6">
               <View className="bg-white sm:border sm:border-gray-100 sm:rounded-[32px] sm:shadow-xl p-2">
                 <View className="items-center mb-8">
                   <Text className="text-3xl font-black text-gray-900" numberOfLines={1}>
                     {step === 1 ? "Create Account" : "Verify Email"}
                   </Text>
+                  <View className="w-12 h-1 bg-pink-500 rounded-full mb-6" />
                   <Text className="text-gray-500 font-medium text-center mt-2 px-4 text-sm leading-5">
                     {step === 1
                       ? "Join us today! It only takes a minute."
@@ -170,6 +182,7 @@ export default function SignUp() {
                           <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1">First Name</Text>
                           <TextInput
                             placeholder="John"
+                            placeholderTextColor="#bacae0"
                             value={formData.firstName}
                             onChangeText={(val) => setFormData({ ...formData, firstName: val })}
                             className="bg-gray-50 border border-gray-100 rounded-2xl h-14 px-4 text-gray-800"
@@ -179,6 +192,7 @@ export default function SignUp() {
                           <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1">Last Name</Text>
                           <TextInput
                             placeholder="Doe"
+                            placeholderTextColor="#bacae0"
                             value={formData.lastName}
                             onChangeText={(val) => setFormData({ ...formData, lastName: val })}
                             className="bg-gray-50 border border-gray-100 rounded-2xl h-14 px-4 text-gray-800"
@@ -189,9 +203,10 @@ export default function SignUp() {
                       <View>
                         <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1 mt-5">Email Address</Text>
                         <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 h-14">
-                          <Mail size={18} color="#d1d5db" />
+                          <Mail size={16} color="#bacae0" />
                           <TextInput
-                            placeholder="yourname@gmail.com"
+                            placeholder="johndoe@gmail.com"
+                            placeholderTextColor="#bacae0"
                             keyboardType="email-address"
                             autoCapitalize="none"
                             value={formData.email}
@@ -205,7 +220,8 @@ export default function SignUp() {
                         <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1 mt-5">Password</Text>
                         <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 h-14">
                           <TextInput
-                            placeholder="••••••••"
+                            placeholder="Enter a strong password"
+                            placeholderTextColor="#bacae0"
                             secureTextEntry={!showPassword}
                             value={formData.password}
                             onChangeText={(val) => setFormData({ ...formData, password: val })}
@@ -220,7 +236,8 @@ export default function SignUp() {
                       <View>
                         <Text className="text-[10px] font-bold uppercase text-gray-400 mb-1 ml-1 mt-5">Confirm Password</Text>
                         <TextInput
-                          placeholder="••••••••"
+                          placeholder="Re-enter your password"
+                          placeholderTextColor="#bacae0"
                           secureTextEntry
                           value={formData.confirmPassword}
                           onChangeText={(val) => setFormData({ ...formData, confirmPassword: val })}
@@ -263,12 +280,11 @@ export default function SignUp() {
                     </View>
                   )}
 
-                  {/* Submit Button */}
                   <TouchableOpacity
                     disabled={loading || (step === 2 && timeLeft === 0)}
                     onPress={step === 1 ? submitHandler : otpVerifyHandler}
                     activeOpacity={0.8}
-                    className={`w-full h-16 rounded-md items-center justify-center shadow-lg shadow-gray-200 mt-4 ${step === 1 ? "bg-pink-600" : "bg-emerald-600"
+                    className={`w-full h-16 rounded-md items-center justify-center shadow-lg shadow-gray-200 mt-4 ${step === 1 ? "bg-black" : "bg-emerald-600"
                       }`}
                   >
                     {loading ? (
@@ -280,7 +296,6 @@ export default function SignUp() {
                     )}
                   </TouchableOpacity>
 
-                  {/* Footer */}
                   <TouchableOpacity onPress={() => router.push("/login")} className="flex-row justify-center items-center py-6">
                     <Text className="text-sm text-gray-500 font-medium" numberOfLines={1}>Already have an account.?</Text>
                     <TouchableOpacity >
@@ -290,12 +305,13 @@ export default function SignUp() {
                 </View>
               </View>
             </View>
-          </ScrollView>
 
+
+
+          </ScrollView>
         </TouchableWithoutFeedback>
 
 
-        {/* Floating Toast Notification */}
         {toastMsg ? (
           <Animated.View
             style={{

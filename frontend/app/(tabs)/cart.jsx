@@ -98,18 +98,32 @@ export default function Cart() {
 
   if (!cart?.items?.length) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <View className="w-20 h-20 bg-rose-50 rounded-full items-center justify-center mb-6">
-          <ShoppingCart size={32} color="#fb7185" />
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 items-center justify-center px-10">
+          <View className="w-24 h-24 bg-slate-50 rounded-full items-center justify-center mb-8 border border-slate-100">
+            <ShoppingCart size={40} color="#0f172a" strokeWidth={1} />
+          </View>
+          <Text className="text-3xl font-black text-slate-900 tracking-tighter mb-3" numberOfLines={1}>
+            Cart is empty
+          </Text>
+          <Text className="text-slate-500 text-center text-sm leading-6 mb-12 max-w-[200px]">
+            You havent added any items to your bag yet. Lets start exploring.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/shop')}
+            className="bg-pink-600 px-10 py-4 rounded-full shadow-lg shadow-pink-200"
+          >
+            <Text className="text-white font-bold text-xs uppercase tracking-[0.2em]">Browse Collection</Text>
+          </TouchableOpacity>
+          <View className="mt-8 flex-row items-center">
+            <View className="h-[1px] w-8 bg-slate-200" />
+            <Text className="text-slate-300 font-medium text-[10px] uppercase mx-4">or</Text>
+            <View className="h-[1px] w-8 bg-slate-200" />
+          </View>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/wishlist')}>
+            <Text className="text-slate-900 font-bold text-xs mt-6 underline underline-offset-4" numberOfLines={1}>View My Wishlist</Text>
+          </TouchableOpacity>
         </View>
-        <Text className="text-xl font-black text-slate-900 tracking-tight" numberOfLines={1}>Your cart is empty</Text>
-        <Text className="text-slate-400 text-center mt-2 mb-8 text-sm">Looks like you have not added anything yet.</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/(tabs)/shop')}
-          className="bg-black px-8 py-4 rounded-full w-full items-center"
-        >
-          <Text className="text-white font-bold uppercase tracking-widest text-xs">Start Shopping</Text>
-        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -173,18 +187,24 @@ export default function Cart() {
   return (
     <SafeAreaView className="flex-1 bg-[#f8f9fa]">
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 40 }}>
-        <View className="px-6 pt-3 pb-4 flex-row justify-between items-end">
+        <View className="flex-row justify-between px-6 pt-3 pb-3 border-b border-gray-100">
           <View>
-            <Text numberOfLines={1} className="text-3xl font-black text-slate-900 tracking-tighter">My Cart</Text>
-            <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{cart.items.length} Items</Text>
+            <View className="flex-row items-center">
+              <Text numberOfLines={1} className="text-3xl font-black text-gray-900 tracking-tight">My Cart Items</Text>
+              <View className="ml-2 bg-rose-50 px-2 py-0.5 rounded-full">
+                <Text className="text-rose-500 text-xs font-bold">{cart?.items?.length || 0}</Text>
+              </View>
+            </View>
+            <Text className="text-gray-400 text-xs mt-1">Review your selections and proceed to checkout.</Text>
           </View>
           <TouchableOpacity onPress={() => router.push('../(tabs)/shop')} className="flex flex-row items-center mb-1">
             <ArrowLeft size={12} color="#db2777" />
-            <Text className="text-[10px] font-black uppercase text-pink-600 ml-1">Add More</Text>
+            <Text className="text-[13px] font-black uppercase text-pink-600 ml-1">Add More</Text>
           </TouchableOpacity>
         </View>
 
-        <View className="px-4">
+
+        <View className="px-4 mt-6">
           <View className="bg-white p-4 rounded-md border border-pink-50 shadow-sm mb-4">
             <View className="flex-row justify-between items-center mb-2">
               <View className="flex-row items-center">
@@ -286,7 +306,7 @@ export default function Cart() {
 
           <TouchableOpacity
             onPress={() => router.push('/components/AddressForm')}
-            className="bg-black h-16 rounded-full items-center justify-center flex-row mt-6 shadow-lg"
+            className="bg-black h-16 rounded-xl items-center justify-center flex-row mt-6 shadow-lg"
           >
             <Text className="text-white font-black tracking-widest uppercase text-xs mr-2">Place Order</Text>
             <ChevronRight size={16} color="#fff" />

@@ -36,7 +36,7 @@ export default function Wishlist() {
     }
   }, [toastMsg]);
 
-  
+
 
   const loadWishlist = async () => {
     try {
@@ -58,7 +58,7 @@ export default function Wishlist() {
 
 
   const handleRemove = async (productId) => {
-    setIsRemovingId(productId); 
+    setIsRemovingId(productId);
     try {
       const token = await AsyncStorage.getItem("accessToken");
       const res = await axios.delete(`${API}/remove`, {
@@ -72,7 +72,7 @@ export default function Wishlist() {
     } catch (error) {
       setToastMsg("Failed to remove item");
     } finally {
-      setIsRemovingId(null);  
+      setIsRemovingId(null);
     }
   };
 
@@ -91,7 +91,7 @@ export default function Wishlist() {
     } catch (error) {
       setToastMsg("Failed to add to cart");
     } finally {
-      setIsAddingId(null); 
+      setIsAddingId(null);
     }
   };
 
@@ -138,18 +138,32 @@ export default function Wishlist() {
 
   if (!wishlist?.items?.length) {
     return (
-      <SafeAreaView className="flex-1 bg-white items-center justify-center px-6">
-        <View className="w-20 h-20 bg-rose-50 rounded-full items-center justify-center mb-6">
-          <Heart size={32} color="#fb7185" />
+      <SafeAreaView className="flex-1 bg-white">
+        <View className="flex-1 items-center justify-center px-10">
+          <View className="w-24 h-24 bg-slate-50 rounded-full items-center justify-center mb-8 border border-slate-100">
+            <Heart size={40} color="#0f172a" strokeWidth={1} />
+          </View>
+          <Text className="text-3xl font-black text-slate-900 tracking-tighter mb-3" numberOfLines={1}>
+            Whishlist is empty
+          </Text>
+          <Text className="text-slate-500 text-center text-sm leading-6 mb-12 max-w-[200px]">
+            You havent added any items to your wishlist yet. Lets start exploring.
+          </Text>
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/shop')}
+            className="bg-pink-600 px-10 py-4 rounded-full shadow-lg shadow-pink-200"
+          >
+            <Text className="text-white font-bold text-xs uppercase tracking-[0.2em]">Browse Collection</Text>
+          </TouchableOpacity>
+          <View className="mt-8 flex-row items-center">
+            <View className="h-[1px] w-8 bg-slate-200" />
+            <Text className="text-slate-300 font-medium text-[10px] uppercase mx-4">or</Text>
+            <View className="h-[1px] w-8 bg-slate-200" />
+          </View>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/cart')}>
+            <Text className="text-slate-900 font-bold text-xs mt-6 underline underline-offset-4" numberOfLines={1}>View My Cart</Text>
+          </TouchableOpacity>
         </View>
-        <Text className="text-xl font-black text-slate-900 tracking-tight" numberOfLines={1}>Your wishlist is empty</Text>
-        <Text className="text-slate-400 text-center mt-2 mb-8 text-sm">Items you save will appear here for your next aesthetic upgrade!</Text>
-        <TouchableOpacity
-          onPress={() => router.push('/shop')}
-          className="bg-black px-8 py-4 rounded-full items-center "
-        >
-          <Text className="text-white font-bold uppercase tracking-widest text-xs">Shop Arrivals</Text>
-        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -170,7 +184,7 @@ export default function Wishlist() {
         {wishlist.items.map((item) => (
           <View
             key={item.productId?._id}
-            className="relative bg-white p-4 mb-3 rounded-xl border border-slate-100 shadow-sm shadow-slate-200"
+            className="relative bg-white p-4 mb-3 rounded-xl border-2 border-slate-100 shadow-2xl mt-3"
           >
             <TouchableOpacity
               onPress={() => handleRemove(item.productId?._id)}

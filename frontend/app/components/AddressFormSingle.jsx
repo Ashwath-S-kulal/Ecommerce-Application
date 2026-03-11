@@ -266,18 +266,36 @@ export default function AddressForm() {
                 keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
             >
                 <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-
-                    <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 5}}>
-
-                        {/* Header */}
+                    <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 5 }}>
                         <View className="mb-6 items-center">
                             <Text className="text-2xl font-[900] text-[#0f172a]" numberOfLines={1}>
-                                Checkout <Text className="text-[#ec4899] italic font-serif">Process</Text>
+                                Checkout <Text className="text-[#ec4899] font-serif">Process</Text>
                             </Text>
                             <Text className="text-[12px] text-[#64748b] mt-1">Complete your order by providing delivery details</Text>
                         </View>
 
-                        {/* PRODUCT SUMMARY SECTION */}
+
+                        <TouchableOpacity>
+                            {subTotal < 5000 && (
+                            <View className="bg-pink-50 border border-pink-100 rounded-2xl p-4 mb-5 flex-row items-center">
+                                <View className="flex-1">
+                                    <Text className="text-xs font-black text-pink-900 uppercase tracking-widest">
+                                        Unlock Free Shipping
+                                    </Text>
+                                    <Text className="text-[11px] text-pink-700 mt-0.5">
+                                        Add ₹{(5000 - subTotal).toLocaleString()} more to get free delivery!
+                                    </Text>
+                                    <View className="h-1.5 bg-pink-200 rounded-full mt-2 overflow-hidden">
+                                        <View
+                                            className="h-full bg-pink-600 rounded-full"
+                                            style={{ width: `${Math.min((subTotal / 5000) * 100, 100)}%` }}
+                                        />
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+                        </TouchableOpacity>
+
                         <View className="bg-white rounded-md border border-[#e2e8f0] mb-5 overflow-hidden">
                             <View className="bg-[#f8fafc] p-4 border-b border-[#f1f5f9] flex-row justify-between items-center">
                                 <Text className="text-[12px] font-[900] text-[#64748b] tracking-[1px]">Your Selected Item</Text>
@@ -292,8 +310,6 @@ export default function AddressForm() {
                                         <View className="ml-4 flex-1">
                                             <Text className="text-sm font-bold text-[#0f172a]" numberOfLines={1}>{item.productId?.productName}</Text>
                                             <Text className="text-xs text-[#64748b] mb-2">₹{item.productId?.productPrice?.toLocaleString()}</Text>
-
-                                            {/* Quantity Selector */}
                                             <View className="flex-row items-center bg-gray-50 self-start rounded-md border border-gray-200">
                                                 <TouchableOpacity onPress={() => updateQty(item.productId._id, -1)} className="p-2">
                                                     <Minus size={16} color="#0f172a" />
@@ -310,10 +326,15 @@ export default function AddressForm() {
                             </View>
                         </View>
 
+                        
                         {/* ORDER TOTALS */}
                         <View className="bg-white rounded-md border border-[#e2e8f0] mb-5 p-5">
                             <SummaryRow label="Subtotal" value={`₹${subTotal.toLocaleString()}`} />
-                            <SummaryRow label="Shipping Fee" value={shipping === 0 ? "FREE" : `₹${shipping}`} valueStyle={shipping === 0 ? "text-green-600" : "text-[#0f172a]"} />
+                            <SummaryRow
+                                label="Shipping Fee"
+                                value={shipping === 0 ? "FREE" : `₹${shipping.toLocaleString()}`}
+                                valueStyle={shipping === 0 ? "text-green-600" : "text-slate-900"}
+                            />                            
                             <SummaryRow label="Tax" value={`₹${tax.toLocaleString()}`} valueStyle="text-[#0f172a]" />
                             <View className="h-[1px] bg-[#f1f5f9] my-3" />
                             <View className="flex-row justify-between items-center">
@@ -330,18 +351,18 @@ export default function AddressForm() {
                                         {editingId ? "Edit Address" : "New Delivery Address"}
                                     </Text>
 
-                                    <CustomInput label="Full Name" value={formData.fullName} onChangeText={(v) => handleChange("fullName", v)} placeholder="Ex: John Doe" />
-                                    <CustomInput label="Phone" value={formData.phone} onChangeText={(v) => handleChange("phone", v)} placeholder="Ex: +91 98765..." keyboardType="phone-pad" />
+                                    <CustomInput label="Full Name" required value={formData.fullName} onChangeText={(v) => handleChange("fullName", v)} placeholder="Ex: John Doe" />
+                                    <CustomInput label="Phone" required value={formData.phone} onChangeText={(v) => handleChange("phone", v)} placeholder="Ex: +91 98765..." keyboardType="phone-pad" />
                                     <CustomInput label="Email" value={formData.email} onChangeText={(v) => handleChange("email", v)} placeholder="Ex: john@example.com" keyboardType="email-address" autoCapitalize="none" />
-                                    <CustomInput label="Street Address" value={formData.street} onChangeText={(v) => handleChange("street", v)} placeholder="Apartment, suite, unit, etc." />
+                                    <CustomInput label="Street / Home Address" required value={formData.street} onChangeText={(v) => handleChange("street", v)} placeholder="Apartment, suite, unit, etc." />
 
                                     <View className="flex-row items-center">
-                                        <View className="flex-1 mr-2"><CustomInput label="City" value={formData.city} onChangeText={(v) => handleChange("city", v)} placeholder="City" /></View>
+                                        <View className="flex-1 mr-2"><CustomInput label="City" required value={formData.city} onChangeText={(v) => handleChange("city", v)} placeholder="City" /></View>
                                         <View className="flex-1"><CustomInput label="State" value={formData.state} onChangeText={(v) => handleChange("state", v)} placeholder="State" /></View>
                                     </View>
 
                                     <View className="flex-row items-center">
-                                        <View className="flex-1 mr-2"><CustomInput label="Zip Code" value={formData.zip} onChangeText={(v) => handleChange("zip", v)} placeholder="Zip" keyboardType="numeric" /></View>
+                                        <View className="flex-1 mr-2"><CustomInput label="Zip Code" required value={formData.zip} onChangeText={(v) => handleChange("zip", v)} placeholder="Zip" keyboardType="numeric" /></View>
                                         <View className="flex-1"><CustomInput label="Country" value={formData.country} onChangeText={(v) => handleChange("country", v)} placeholder="Country" /></View>
                                     </View>
 
@@ -431,7 +452,7 @@ export default function AddressForm() {
                                     )}
 
                                     <TouchableOpacity
-                                        className={`bg-[#0f172a] h-[55px] rounded-[20px] flex-row justify-center items-center mt-2.5 ${(!selectedAddress || addresses.length === 0) ? "opacity-50" : ""}`}
+                                        className={`bg-[#0f172a] h-[55px] rounded-xl flex-row justify-center items-center mt-2.5 ${(!selectedAddress || addresses.length === 0) ? "opacity-50" : ""}`}
                                         onPress={handleCheckoutTrigger}
                                         disabled={!selectedAddress || addresses.length === 0}
                                     >
@@ -451,7 +472,7 @@ export default function AddressForm() {
             <Modal visible={isConfirmOpen} transparent animationType="fade">
                 <View className="flex-1 bg-black/50 justify-center items-center">
                     <View className="w-[90%] bg-white rounded-2xl p-[25px] items-center">
-                        <Text className="text-[22px] font-[900] text-[#0f172a]">Confirm Order</Text>
+                        <Text className="text-[22px] font-[900] text-[#0f172a]">Confirm Your Order</Text>
                         <Text className="text-[#64748b] text-center my-2.5 text-[14px] font-bold">
                             Order total:{" "} ₹ <Text className="text-4xl text-[#0f172a] font-bold">{total.toLocaleString()}</Text>
                         </Text>
@@ -499,9 +520,20 @@ const SummaryRow = ({ label, value, valueStyle = "text-[#0f172a]" }) => (
     </View>
 );
 
-const CustomInput = ({ label, ...props }) => (
-    <View className="mb-4">
-        <Text className="text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">{label}</Text>
-        <TextInput className="border border-gray-200 rounded-xl h-11 px-4 text-[#0f172a] bg-gray-50/50" {...props} />
+const CustomInput = ({ label, required, ...props }) => (
+    <View className="mb-[15px]">
+        <View className="flex-row items-center mb-[5px] ml-1">
+            <Text className="text-[10px] font-bold text-[#94a3b8] uppercase">{label}</Text>
+            {required ? (
+                <Text className="text-red-500 font-bold ml-1">*</Text>
+            ) : (
+                <Text className="text-[#cbd5e1] font-medium text-[9px] ml-2">[Optional]</Text>
+            )}
+        </View>
+        <TextInput
+            className="border border-[#e2e8f0] rounded-[12px] h-[45px] px-[15px] text-[#0f172a] bg-white"
+            placeholderTextColor="#94a3b8"
+            {...props}
+        />
     </View>
 );

@@ -20,7 +20,6 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(pages)" />
             <Stack.Screen name="(admin)" />
-            <Stack.Screen name="components" />
           </Stack>
         </SafeAreaProvider>
       </PersistGate>

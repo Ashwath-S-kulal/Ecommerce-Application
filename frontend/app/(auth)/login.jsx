@@ -6,9 +6,8 @@ import { setUser } from "../../redux/userSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput, TouchableOpacity, View, Text, TouchableWithoutFeedback, Keyboard } from "react-native";
 import { router } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
-import { LinearGradient } from 'expo-linear-gradient';
+import { Image } from "react-native";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -23,7 +22,6 @@ export default function Login() {
   const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
 
-  // --- Handlers (Existing logic preserved) ---
   const handleLogin = async () => {
     setLoading(true);
     try {
@@ -87,30 +85,43 @@ export default function Login() {
   };
 
   return (
-    <View className="flex-1">
-      <LinearGradient
-        colors={['#FD8CD5', '#db2777']}
-        className="flex-1 p-6 max-h-[250px] pt-20"
-      >
-        <ScrollView showsVerticalScrollIndicator={false} className="">
-          <Text className="text-white text-2xl font-black mb-4 self-center">Sanjeevini Group Avarse</Text>
-          <Text className="text-white/90 text-base leading-6 mb-6 flex-1 text-justify px-1">
-            Sanjeevini - Karnataka State Rural Livelihood Promotion Society (KSRLPS) was launched on December 2, 2011, to implement the National Rural Livelihood Mission (NRLM) successfully. Its mission is to alleviate rural poverty through sustainable income generation and self-employment. Currently, it supports over 2.8 million rural women across the state.
-          </Text>
-        </ScrollView>
-      </LinearGradient>
+    <View className="flex-1 bg-white">
+
+      <View className="absolute top-0 left-0 w-full h-full bg-slate-50" />
+      <View className="absolute bottom-0 right-0 w-full h-full bg-slate-50" />
+      <View className="absolute -top-20 -right-20 w-80 h-80 bg-pink-100 rounded-full blur-[60px] opacity-60" />
+      <View className="absolute top-1/2 -left-20 w-60 h-60 bg-blue-50 rounded-full blur-[60px] opacity-40" />
 
       <KeyboardAvoidingView
-        behavior={Platform.OS === "android" || "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "android" ? "padding" : "padding"}
         className="flex-1"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <ScrollView
-            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 32 }}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 }}
             showsVerticalScrollIndicator={false}
           >
-            <View className="bg-white p-8 rounded-[32px] shadow-2xl">
+
+            <View className="items-center mb-10 mt-12">
+              <TouchableOpacity onPress={() => router.push("/")}
+                className="w-28 h-28 bg-white rounded-[32px] items-center justify-center shadow-xl shadow-pink-200 border border-slate-100 mb-6">
+                <Image
+                  source={require('../../assets/logo_bg_rmv.png')}
+                  style={{ width: 80, height: 80 }}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+              <Text className="text-slate-900 text-4xl font-extrabold tracking-tighter" numberOfLines={1}>Sanjeevini Group Avarse</Text>
+              <View className="flex-row items-center mt-2">
+                <View className="w-8 h-[2px] bg-pink-500/30 mr-2" />
+                <Text className="text-slate-400 text-xs font-bold uppercase tracking-[3px]">Rural Livelihood</Text>
+                <View className="w-8 h-[2px] bg-pink-500/30 ml-2" />
+              </View>
+            </View>
+
+
+
+            <View className="bg-white/80 backdrop-blur-xl p-8 rounded-[32px] border border-white shadow-2xl shadow-pink-200/50">
               <View className="items-center mb-10">
                 {mode !== 'login' && (
                   <TouchableOpacity
@@ -120,9 +131,10 @@ export default function Login() {
                     <ArrowLeft size={20} color="#0F172A" />
                   </TouchableOpacity>
                 )}
-                <Text className="text-4xl font-black text-slate-900 tracking-tighter">
+                <Text className="text-3xl font-black text-slate-900 tracking-tighter">
                   {mode === 'login' ? "Welcome." : mode === 'forgot' ? "Recover." : mode === 'verify' ? "Verify." : "Reset."}
                 </Text>
+                <View className="w-12 h-1 bg-pink-500 rounded-full mb-6" />
                 <Text className="text-lg text-slate-500 font-medium mt-2">
                   {mode === 'login' ? "Login with your Email & Password" : "Follow the steps to continue"}
                 </Text>
@@ -136,7 +148,7 @@ export default function Login() {
                       <Mail size={18} color="#94a3b8" />
                       <TextInput
                         className="flex-1 ml-3 text-base font-semibold text-slate-900"
-                        placeholder="name@example.com"
+                        placeholder="youremail@gmail.com"
                         placeholderTextColor="#cbd5e1"
                         value={formData.email}
                         onChangeText={(t) => setFormData({ ...formData, email: t })}
@@ -147,7 +159,6 @@ export default function Login() {
                   </View>
                 )}
 
-                {/* PASSWORD */}
                 {mode === 'login' && (
                   <View>
                     <View className="flex-row justify-between items-center mb-2 mt-5">
@@ -173,10 +184,9 @@ export default function Login() {
                   </View>
                 )}
 
-                {/* OTP */}
                 {mode === 'verify' && (
                   <View>
-                    <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2 text-center">Enter 6-Digit Code</Text>
+                    <Text className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2 text-center">Enter the 6-digit code sent to your email.</Text>
                     <View className="bg-white h-20 rounded-2xl border border-slate-100 shadow-sm shadow-slate-200 justify-center">
                       <TextInput
                         className="text-center text-3xl font-black text-slate-900 tracking-[10px]"
@@ -192,7 +202,6 @@ export default function Login() {
                   </View>
                 )}
 
-                {/* RESET */}
                 {mode === 'reset' && (
                   <View className="space-y-5">
                     <View className="bg-white h-16 rounded-2xl px-5 border border-slate-100 shadow-sm">
@@ -214,7 +223,6 @@ export default function Login() {
                   </View>
                 )}
 
-                {/* BUTTON */}
                 <TouchableOpacity
                   onPress={
                     mode === 'login' ? handleLogin :
@@ -229,16 +237,14 @@ export default function Login() {
                   ) : (
                     <>
                       <Text className="text-white text-lg font-bold mr-2" numberOfLines={1}>
-                        {mode === 'login' ? "Login" : mode === 'forgot' ? "Send Code" : mode === 'verify' ? "Verify OTP" : "Update Password"}
+                        {mode === 'login' ? "Login" : mode === 'forgot' ? "Send OTP" : mode === 'verify' ? "Verify OTP" : "Update Password"}
                       </Text>
                       <ChevronRight size={18} color="white" />
                     </>
                   )}
                 </TouchableOpacity>
-
               </View>
 
-              {/* Footer */}
               {mode === 'login' && (
                 <View className="mt-10 items-center">
                   <TouchableOpacity onPress={() => router.push("/signup")}>
@@ -249,6 +255,7 @@ export default function Login() {
                 </View>
               )}
             </View>
+
 
           </ScrollView>
         </TouchableWithoutFeedback>

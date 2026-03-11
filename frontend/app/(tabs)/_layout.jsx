@@ -14,7 +14,7 @@ export default function TabsLayout() {
     const onBackPress = () => {
       if (router.canGoBack()) {
         router.back();
-        return true; 
+        return true;
       }
       return false;
     };
@@ -25,7 +25,7 @@ export default function TabsLayout() {
     );
 
     return () => backHandlerSubscription.remove();
-  }, [pathname]); 
+  }, [pathname]);
 
   const protectTab = (e) => {
     if (!user) {
@@ -38,13 +38,19 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        backBehavior: "history", 
+        backBehavior: "history",
         tabBarActiveTintColor: "#db2777",
         tabBarInactiveTintColor: "gray",
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: "bold",
           textTransform: "uppercase",
+        },
+        tabBarStyle: {
+          height: 65, 
+          paddingTop: 10,
+          paddingBottom: 15,
+          backgroundColor: '#ffffff',
         },
       }}
     >
@@ -85,7 +91,7 @@ export default function TabsLayout() {
         name="wishlist"
         listeners={{ tabPress: protectTab }}
         options={{
-          title: "Wish",
+          title: "Wishlist",
           tabBarBadge: wishlist?.items?.length > 0 ? wishlist.items.length : null,
           tabBarBadgeStyle: { backgroundColor: "black" },
           tabBarIcon: ({ color, size }) => (
@@ -104,8 +110,6 @@ export default function TabsLayout() {
           ),
         }}
       />
-
-      <Tabs.Screen name="(auth)" options={{ href: null }} />
     </Tabs>
   );
 }

@@ -7,18 +7,19 @@ import {
   TouchableOpacity,
   Dimensions,
   StatusBar,
-  Animated,
-  ActivityIndicator
+  Animated
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
-import { useRouter, usePathname } from 'expo-router';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setCart, setNotifications, setWishlist, setProducts } from '@/redux/productSlice';
-import { Bell, ArrowRight, Hand, User, User2, User2Icon, Eye, Crown, History, LogIn } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Bell, ArrowRight, Crown, LogIn ,Users} from 'lucide-react-native';
 import Constants from "expo-constants";
 import Carousel from 'react-native-reanimated-carousel';
+
+import { LinearGradient } from 'expo-linear-gradient';
+import TodayDeliveriesPage from '../(admin)/TodaysDelivery';
 
 const { width } = Dimensions.get('window');
 const BASE_URL = Constants.expoConfig.extra.apiUrl;
@@ -34,14 +35,11 @@ const CAROUSEL_DATA = [
 export default function Home() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const pathname = usePathname();
   const { user } = useSelector((store) => store.user);
   const { unreadCount, products } = useSelector((store) => store.product);
 
   const [loading, setLoading] = useState(false);
-  const scrollX = useRef(new Animated.Value(0)).current;
   const isAdmin = user?.role === 'admin';
-  const isActive = pathname === '/notifications';
 
   useEffect(() => {
     const loadData = async () => {
@@ -83,7 +81,7 @@ export default function Home() {
   const ProductCard = ({ item }) => (
     <TouchableOpacity
       onPress={() => router.push(`/product/${item._id}`)}
-      className="mr-4 w-40"
+      className="mr-4 w-40 pb-3"
       activeOpacity={0.7}
     >
       <View className="h-40 w-full rounded-2xl bg-slate-200 overflow-hidden relative shadow-sm">
@@ -114,25 +112,12 @@ export default function Home() {
 
       <View className="px-6 pt-16 pb-4 bg-[#FEE6F6] border-b border-slate-50 flex-row items-center justify-between">
         <View className="flex-row items-center flex-1 gap-4">
-          <TouchableOpacity className="w-12 h-12 rounded-full bg-slate-100 items-center justify-center border border-slate-200 overflow-hidden"
-            onPress={() => {
-              if (user) {
-                router.push("/profile");
-              } else {
-                router.push("/login");
-              }
-            }}>
-            {user?.profilePic ? (
-              <Image
-                source={{ uri: user.profilePic }}
-                className="w-full h-full"
-                resizeMode="cover"
-              />
-            ) : (
-              <Text className="text-lg font-black text-slate-400">
-                {user?.firstName?.charAt(0).toUpperCase() || <User />}
-              </Text>
-            )}
+          <TouchableOpacity className="w-16 h-16 items-center justify-center">
+            <Image
+              source={require("../../assets/logo_bg_rmv.png")}
+              className="w-full h-full bg-[#FEE6F6]"
+              resizeMode="cover"
+            />
           </TouchableOpacity>
           <View className="flex-1 justify-center">
             <Text className="text-[10px] font-black text-pink-700 uppercase tracking-[0.25em]">
@@ -142,7 +127,6 @@ export default function Home() {
               <Text className="text-2xl font-black text-slate-900 leading-tight mr-2" numberOfLines={1}>
                 {user?.firstName ? `Hi, ${user.firstName.split(' ')[0]}` : "Hello, Guest"}
               </Text>
-              <Hand size={20} color="#fb7185" style={{ transform: [{ rotate: '-20deg' }] }} />
             </View>
           </View>
         </View>
@@ -201,9 +185,14 @@ export default function Home() {
               </View>
             )}
           />
+
         </View>
 
-        <View className="mt-10 px-6">
+        {isAdmin && (
+          <TodayDeliveriesPage />
+        )}
+
+        <View className="mt-3 px-6">
           <View className="flex-row justify-between items-end mb-4">
             <Text className="text-xl font-black text-slate-900" numberOfLines={1}>New Arrivals</Text>
             <TouchableOpacity className="flex-row items-center" onPress={() => router.push("/shop")}>
@@ -236,6 +225,8 @@ export default function Home() {
 
 
 
+
+
 const ProductCardSkeleton = () => {
   const fade = useRef(new Animated.Value(0.3)).current;
 
@@ -260,34 +251,27 @@ const ProductCardSkeleton = () => {
 };
 
 
-import { Target, Users } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+
+
 
 const SanjeeviniSection = () => (
-  // Changed ScrollView to View to prevent gesture conflicts
   <View className="bg-white pb-10">
     <View className="p-6">
-      {/* History Section */}
-      <View className="bg-slate-50 p-6 rounded-3xl mb-4 border border-slate-100">
-        <History size={24} color="#db2777" className="mb-3" />
+      <View className="bg-slate-50 p-6 rounded-md mb-4 border border-slate-100">
         <Text className="text-slate-900 font-black text-lg mb-2">Our History</Text>
         <Text className="text-slate-800/80 leading-6">
           Sanjeevini – Karnataka State Rural Livelihood Promotion Society (KSRLPS) was officially launched on 02/12/2011 to implement the National Rural Livelihood Mission (NRLM).
         </Text>
       </View>
 
-      {/* Vision Section */}
-      <View className="bg-pink-50 p-6 rounded-3xl mb-4 border border-pink-100">
-        <Eye size={24} color="#db2777" className="mb-3" />
+      <View className="bg-pink-50 p-6 rounded-md mb-4 border border-pink-100">
         <Text className="text-pink-900 font-black text-lg mb-2">Our Vision</Text>
-        <Text className="text-pink-800/80 leading-6 italic">
-          “To establish a self-reliant rural ecosystem where every woman is an empowered entrepreneur and a pillar of the local economy.”
+        <Text className="text-pink-800/80 leading-6 ">
+          To establish a self-reliant rural ecosystem where every woman is an empowered entrepreneur and a pillar of the local economy.
         </Text>
       </View>
 
-      {/* Mission Section */}
-      <View className="bg-slate-50 p-6 rounded-3xl border border-slate-100">
-        <Target size={24} color="#334155" className="mb-3" />
+      <View className="bg-slate-50 p-6 rounded-md border border-slate-100">
         <Text className="text-slate-900 font-black text-lg mb-2">Our Mission</Text>
         <Text className="text-slate-600 leading-6">
           To facilitate sustainable livelihoods through financial inclusion, skill-based training, and the formation of strong, transparent community cooperatives.
@@ -295,39 +279,57 @@ const SanjeeviniSection = () => (
       </View>
     </View>
 
-    {/* Leadership Structure */}
-    <View className="px-6 mb-8">
-      <Text className="text-2xl font-black text-slate-900 mb-6">Leadership</Text>
 
-      <View className="bg-white border border-slate-200 p-6 rounded-3xl shadow-sm flex-row items-center mb-4">
-        <View className="w-16 h-16 bg-pink-100 rounded-full items-center justify-center mr-4">
-          <Crown size={28} color="#db2777" />
-        </View>
-        <View>
-          <Text className="text-sm text-slate-400 font-bold uppercase tracking-widest">President</Text>
-          <Text className="text-xl font-black text-slate-900">Smt. Yashodha</Text>
-        </View>
-      </View>
-
-      <View className="bg-slate-900 p-6 rounded-3xl">
-        <Text className="text-white font-black mb-4">Key Federation Members</Text>
-        {['Secretary: [Name]', 'Treasurer: [Name]', 'Coordinator: [Name]'].map((role, i) => (
-          <View key={i} className="flex-row items-center py-3 border-b border-slate-800">
-            <Users size={16} color="#fb7185" className="mr-3" />
-            <Text className="text-slate-300">{role}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-
-    {/* Impact Statistics */}
     <View className="px-6">
-      <Text className="text-slate-900 font-black text-xl mb-4">Structure of Impact</Text>
-      <View className="bg-white border border-slate-200 rounded-3xl p-6">
-        <Text className="text-slate-900 font-bold mb-2">Detailed Statistics</Text>
-        <Text className="text-slate-500 text-xs leading-5">
-          Currently, our federation manages 61 active Self-Help Groups (SHGs) under the Avarse Panchayat, serving over 28 lakh rural women across the state.
-        </Text>
+      <Text className="text-slate-900 font-black text-2xl mb-6">Structure of Impact</Text>
+      <View className="space-y-4">
+        <View className="bg-white border border-slate-100 rounded-md p-6 shadow-sm">
+          <Text className="text-pink-600 font-bold text-[10px] uppercase tracking-widest mb-1">Program Overview</Text>
+          <Text className="text-slate-900 font-bold text-base mb-2">Sanjeevini - KSRLPS</Text>
+          <Text className="text-slate-500 text-xs leading-5">
+            Started on 02/12/2011 under the National Rural Livelihood Mission (NRLM) to improve the livelihoods of rural women through Self Help Groups and community institutions.
+          </Text>
+        </View>
+
+        <View className="flex-row gap-4 mt-5">
+          <View className="flex-1 bg-white border border-slate-100 rounded-md p-5 shadow-sm">
+            <Text className="text-slate-400 text-[10px] uppercase font-bold">State Impact</Text>
+            <Text className="text-slate-900 font-black text-lg mt-1">28 Lakh+</Text>
+            <Text className="text-slate-500 text-[10px] mt-1">Rural women supported across Karnataka.</Text>
+          </View>
+          <View className="flex-1 bg-white border border-slate-100 rounded-md p-5 shadow-sm">
+            <Text className="text-slate-400 text-[10px] uppercase font-bold">Local Units</Text>
+            <Text className="text-slate-900 font-black text-lg mt-1">61 Groups</Text>
+            <Text className="text-slate-500 text-[10px] mt-1">Active SHGs in Avarse.</Text>
+          </View>
+        </View>
+
+        <View className="bg-slate-900 rounded-md p-6 mt-5">
+          <Text className="text-emerald-400 font-bold text-[10px] uppercase tracking-widest mb-1">Village Level Structure</Text>
+          <Text className="text-white font-bold text-base mb-2">Siddhivinayaka </Text>
+          <Text className="text-slate-400 text-xs leading-5">
+            Formed on 23/09/2020. The federation currently manages 6 ward-level organizations and 61 active Self Help Groups.
+          </Text>
+        </View>
+
+        <View className="bg-white border border-slate-100 rounded-md p-6 shadow-sm mt-5">
+          <Text className="text-indigo-600 font-bold text-[10px] uppercase tracking-widest mb-2">Financial & Livelihood</Text>
+
+          <Text className="text-slate-900 font-bold text-xs mb-1">Financial Support</Text>
+          <Text className="text-slate-500 text-xs leading-5 mb-4">
+            Members receive assistance through CIF and VRF funds to help start and expand small businesses.
+          </Text>
+
+          <Text className="text-slate-900 font-bold text-xs mb-1">Livelihood Activities</Text>
+          <Text className="text-slate-500 text-xs leading-5">
+            Papad/sandige, candles, dairy, poultry, jasmine cultivation, areca nursery, hotel business, and retail.
+          </Text>
+
+          <View className="mt-4 pt-4 border-t border-slate-100">
+            <Text className="text-slate-900 font-black text-sm">18 Women Entrepreneurs</Text>
+            <Text className="text-slate-500 text-[10px]">Successfully running enterprises under the federation.</Text>
+          </View>
+        </View>
       </View>
     </View>
   </View>
@@ -361,38 +363,43 @@ const membersData = [
 const MembersList = ({ data }) => {
   return (
     <View className="px-6 py-6">
-      <Text className="text-xl font-black text-slate-900 mb-4">ಸದಸ್ಯರ ವಿವರ (Member Registry)</Text>
+      <View className="mb-8">
+        <Text className="text-2xl font-black text-slate-900 mb-6">Leadership</Text>
+
+        <View className="bg-white border border-slate-200 p-6 rounded-md shadow-sm flex-row items-center mb-4">
+          <View className="w-16 h-16 bg-pink-100 rounded-full items-center justify-center mr-4">
+            <Crown size={28} color="#db2777" />
+          </View>
+          <View>
+            <Text className="text-sm text-slate-400 font-bold uppercase tracking-widest">President</Text>
+            <Text className="text-xl font-black text-slate-900">Smt. Yashodha</Text>
+          </View>
+        </View>
+      </View>
+      <Text className="text-xl font-black text-slate-900 mb-4">Member Registry (ಸದಸ್ಯರ ವಿವರ)</Text>
 
       {data.map((item) => (
         <View
           key={item.id}
-          className="flex-row items-center bg-white p-4 mb-3 rounded-2xl border border-slate-100 shadow-sm"
+          className="flex-row items-center bg-white p-4 mb-2 rounded-md border border-slate-100 shadow-sm"
         >
-          {/* Icon Section */}
           <View className="w-10 h-10 rounded-full bg-pink-50 items-center justify-center mr-4">
             <Users size={18} color="#db2777" />
           </View>
-
-          {/* Information Section */}
           <View className="flex-1">
             <Text className="text-sm font-bold text-slate-900">{item.name}</Text>
             <Text className="text-[10px] text-slate-400 font-medium uppercase">
               {item.group !== '-' ? item.group : 'ಸ್ವತಂತ್ರ ಗುಂಪು'}
             </Text>
           </View>
-
-          {/* Product Tag Section - Fixed Width */}
-          <View className="bg-slate-900 w-24 px-3 py-2 rounded-full items-center justify-center">
-            <Text
-              className="text-white text-[9px] font-black tracking-wider uppercase"
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
+          <View className="bg-slate-100 px-4 py-2 rounded-md">
+            <Text className="text-slate-900 text-[10px] font-black uppercase tracking-wider">
               {item.product}
             </Text>
           </View>
         </View>
       ))}
+
     </View>
   );
 };

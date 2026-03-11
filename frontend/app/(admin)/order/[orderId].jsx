@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
     View, Text, ScrollView, Image, TouchableOpacity,
-    ActivityIndicator, RefreshControl, Alert
+    ActivityIndicator, RefreshControl, Alert,
+    Linking
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import axios from "axios";
@@ -211,7 +212,6 @@ export default function OrderDetailsPage() {
             );
 
             if (response.data.success) {
-                Alert.alert("Success", "Order logistics updated.");
                 fetchOrderDetails();
             }
         } catch (err) {
@@ -352,9 +352,17 @@ export default function OrderDetailsPage() {
                             {order.address?.state} - {order.address?.zip}
                         </Text>
                         <View className="mt-4 pt-4 border-t border-slate-200/50 gap-y-2">
-                            <View className="flex-row items-center">
-                                <Phone size={12} color="#ec4899" />
-                                <Text className="ml-2 text-slate-600 text-[10px] font-black">{order.address?.phone}</Text>
+                            <View className="flex-row items-center justify-between">
+                                <View className="flex-row items-center">
+                                    <Phone size={12} color="#ec4899" />
+                                    <Text className="ml-2 text-slate-600 text-[10px] font-black">{order.address?.phone}</Text>
+                                </View>
+                                <TouchableOpacity
+                                    onPress={() => Linking.openURL(`tel:${order.address?.phone}`)}
+                                    className="bg-green-700 px-4 py-1 rounded-full"
+                                >
+                                    <Text className="text-[10px] font-black text-white uppercase">Call</Text>
+                                </TouchableOpacity>
                             </View>
                             <View className="flex-row items-center">
                                 <Mail size={12} color="#ec4899" />
@@ -364,7 +372,6 @@ export default function OrderDetailsPage() {
                     </View>
                 </View>
 
-                {/* Delivery Schedule Management */}
                 <View className="bg-white rounded-md border border-slate-100 p-6 mb-6 shadow-sm">
                     <View className="flex-row items-center justify-between mb-6">
                         <View className="flex-row items-center">
@@ -375,7 +382,7 @@ export default function OrderDetailsPage() {
 
                     <View className="items-center py-4 bg-slate-50 rounded-md border border-slate-100 mb-6">
                         <Text className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1">Expected Delivery</Text>
-                        <Text className="text-2xl font-black text-slate-900 italic" numberOfLines={1}>
+                        <Text className="text-2xl font-black text-slate-900" numberOfLines={1}>
                             {new Date(order.expectedDeliveryDate || new Date()).toLocaleDateString('en-GB', {
                                 day: '2-digit', month: 'short', year: 'numeric'
                             })}
@@ -430,7 +437,7 @@ export default function OrderDetailsPage() {
                                 mode="date"
                                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                                 onChange={onDateChange}
-                                minimumDate={new Date()} 
+                                minimumDate={new Date()}
                             />
                         )}
                     </View>

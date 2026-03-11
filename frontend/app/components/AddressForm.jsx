@@ -14,7 +14,6 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   Keyboard,
-  KeyboardAvoidingViewBase
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
@@ -24,10 +23,9 @@ import {
   Plus,
   ArrowRight,
   Home,
-  ShoppingBag,
   Edit2,
 } from "lucide-react-native";
-import { addAddress, deleteAddress, setSelectedAddress, setAddresses } from "@/redux/productSlice";
+import { deleteAddress, setSelectedAddress, setAddresses } from "@/redux/productSlice";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -93,6 +91,7 @@ export default function AddressForm({ navigation }) {
     }
   }, [token]);
 
+
   const fetchAddresses = async () => {
     try {
       setFetching(true);
@@ -114,11 +113,13 @@ export default function AddressForm({ navigation }) {
     setFormData({ ...formData, [name]: value });
   };
 
+
   const handleEditClick = (addr) => {
     setEditingId(addr._id);
     setFormData(addr);
     setShowForm(true);
   };
+
 
   const resetForm = () => {
     setShowForm(false);
@@ -128,6 +129,7 @@ export default function AddressForm({ navigation }) {
       city: "", state: "", zip: "", country: "",
     });
   };
+
 
   const handleSave = async () => {
     if (!token) return Alert.alert("Error", "Session expired. Please login again.");
@@ -155,6 +157,7 @@ export default function AddressForm({ navigation }) {
     }
   };
 
+
   const handleDelete = async (addressId) => {
     try {
       const res = await axios.delete(`${BASE_URL}/api/address/remove/${addressId}`, {
@@ -170,6 +173,7 @@ export default function AddressForm({ navigation }) {
     }
   };
 
+
   const handleCheckoutTrigger = () => {
     const exists = addresses.find(a => a._id === selectedAddress);
     if (!selectedAddress || !exists) {
@@ -178,6 +182,8 @@ export default function AddressForm({ navigation }) {
     }
     setIsConfirmOpen(true);
   };
+
+
 
   const handleFinalCheckout = async () => {
     setLoading(true);
@@ -189,7 +195,6 @@ export default function AddressForm({ navigation }) {
       })),
       address: selectedObj,
     };
-
     try {
       const res = await axios.post(`${BASE_URL}/api/order/create`, orderData, {
         headers: { Authorization: `Bearer ${token}` },
@@ -209,6 +214,7 @@ export default function AddressForm({ navigation }) {
     }
   };
 
+
   if (fetching) {
     return (
       <View className="flex-1 justify-center items-center bg-[#f8fafc]">
@@ -218,6 +224,7 @@ export default function AddressForm({ navigation }) {
     );
   }
 
+
   return (
     <SafeAreaView className="flex-1 bg-[#f8fafc]">
       <KeyboardAvoidingView
@@ -226,10 +233,10 @@ export default function AddressForm({ navigation }) {
         keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom:5}}>
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 5 }}>
 
             <View className="mb-6 items-center">
-              <Text className="text-2xl font-[900] text-[#0f172a]"   numberOfLines={1}>
+              <Text className="text-2xl font-[900] text-[#0f172a]" numberOfLines={1}>
                 Checkout <Text className="text-[#ec4899] italic font-serif">Process</Text>
               </Text>
               <Text className="text-[12px] text-[#64748b] mt-1">Complete your order by providing delivery details</Text>
@@ -266,18 +273,18 @@ export default function AddressForm({ navigation }) {
                     {editingId ? "Edit Address" : "New Delivery Address"}
                   </Text>
 
-                  <CustomInput label="Full Name" value={formData.fullName} onChangeText={(v) => handleChange("fullName", v)} placeholder="Ex: John Doe" />
-                  <CustomInput label="Phone" value={formData.phone} onChangeText={(v) => handleChange("phone", v)} placeholder="Ex: +91 98765..." keyboardType="phone-pad" />
+                  <CustomInput label="Full Name" required value={formData.fullName} onChangeText={(v) => handleChange("fullName", v)} placeholder="Ex: John Doe" />
+                  <CustomInput label="Phone" required value={formData.phone} onChangeText={(v) => handleChange("phone", v)} placeholder="Ex: +91 98765..." keyboardType="phone-pad" />
                   <CustomInput label="Email" value={formData.email} onChangeText={(v) => handleChange("email", v)} placeholder="Ex: john@example.com" keyboardType="email-address" autoCapitalize="none" />
-                  <CustomInput label="Street Address" value={formData.street} onChangeText={(v) => handleChange("street", v)} placeholder="Apartment, suite, unit, etc." />
+                  <CustomInput label="Street / Home Address" required value={formData.street} onChangeText={(v) => handleChange("street", v)} placeholder="Apartment, suite, unit, etc." />
 
                   <View className="flex-row items-center">
-                    <View className="flex-1 mr-2"><CustomInput label="City" value={formData.city} onChangeText={(v) => handleChange("city", v)} placeholder="City" /></View>
+                    <View className="flex-1 mr-2"><CustomInput label="City" required value={formData.city} onChangeText={(v) => handleChange("city", v)} placeholder="City" /></View>
                     <View className="flex-1"><CustomInput label="State" value={formData.state} onChangeText={(v) => handleChange("state", v)} placeholder="State" /></View>
                   </View>
 
                   <View className="flex-row items-center">
-                    <View className="flex-1 mr-2"><CustomInput label="Zip Code" value={formData.zip} onChangeText={(v) => handleChange("zip", v)} placeholder="Zip" keyboardType="numeric" /></View>
+                    <View className="flex-1 mr-2"><CustomInput label="Zip Code" required value={formData.zip} onChangeText={(v) => handleChange("zip", v)} placeholder="Zip" keyboardType="numeric" /></View>
                     <View className="flex-1"><CustomInput label="Country" value={formData.country} onChangeText={(v) => handleChange("country", v)} placeholder="Country" /></View>
                   </View>
 
@@ -359,7 +366,7 @@ export default function AddressForm({ navigation }) {
                   )}
 
                   <TouchableOpacity
-                    className={`bg-[#0f172a] h-[55px] rounded-[20px] flex-row justify-center items-center mt-2.5 ${(!selectedAddress || addresses.length === 0) ? "opacity-50" : ""}`}
+                    className={`bg-[#0f172a] h-[55px] rounded-xl flex-row justify-center items-center mt-2.5 ${(!selectedAddress || addresses.length === 0) ? "opacity-50" : ""}`}
                     onPress={handleCheckoutTrigger}
                     disabled={!selectedAddress || addresses.length === 0}
                   >
@@ -369,7 +376,6 @@ export default function AddressForm({ navigation }) {
                 </View>
               )}
             </View>
-
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -399,7 +405,7 @@ export default function AddressForm({ navigation }) {
               <TouchableOpacity className="flex-1 h-[50px] justify-center items-center" onPress={() => setIsConfirmOpen(false)}>
                 <Text className="font-bold text-[#64748b]">Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity className="flex-1 bg-[#ec4899] h-[50px] rounded-[15px] justify-center items-center" onPress={handleFinalCheckout} disabled={loading}>
+              <TouchableOpacity className="flex-1 bg-[#ec4899] h-[50px] rounded-xl justify-center items-center" onPress={handleFinalCheckout} disabled={loading}>
                 {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white font-bold">Confirm & Buy</Text>}
               </TouchableOpacity>
             </View>
@@ -422,6 +428,7 @@ export default function AddressForm({ navigation }) {
   );
 }
 
+
 const SummaryRow = ({ label, value, valueStyle = "text-[#0f172a]" }) => (
   <View className="flex-row justify-between mb-3">
     <Text className="text-[#475569] text-[14px]">{label}</Text>
@@ -429,9 +436,17 @@ const SummaryRow = ({ label, value, valueStyle = "text-[#0f172a]" }) => (
   </View>
 );
 
-const CustomInput = ({ label, ...props }) => (
+
+const CustomInput = ({ label, required, ...props }) => (
   <View className="mb-[15px]">
-    <Text className="text-[10px] font-bold text-[#94a3b8] uppercase mb-[5px] ml-1">{label}</Text>
+    <View className="flex-row items-center mb-[5px] ml-1">
+      <Text className="text-[10px] font-bold text-[#94a3b8] uppercase">{label}</Text>
+      {required ? (
+        <Text className="text-red-500 font-bold ml-1">*</Text>
+      ) : (
+        <Text className="text-[#cbd5e1] font-medium text-[9px] ml-2">[Optional]</Text>
+      )}
+    </View>
     <TextInput
       className="border border-[#e2e8f0] rounded-[12px] h-[45px] px-[15px] text-[#0f172a] bg-white"
       placeholderTextColor="#94a3b8"
@@ -439,4 +454,3 @@ const CustomInput = ({ label, ...props }) => (
     />
   </View>
 );
-

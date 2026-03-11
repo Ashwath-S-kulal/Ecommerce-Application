@@ -46,7 +46,7 @@ export default function Profile() {
   const [visible, setIsVisible] = useState(false);
 
   const images = [
-    { uri: file ? file.uri : updateUser.profilePic } // Viewer shows the temporary file if it exists
+    { uri: file ? file.uri : updateUser.profilePic }
   ];
 
 
@@ -225,7 +225,7 @@ export default function Profile() {
     </View>
   );
 
-  
+
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]">
       <KeyboardAvoidingView
@@ -372,6 +372,8 @@ export default function Profile() {
                       <View className="bg-slate-50 p-4 py-2 rounded-xl flex-row items-center">
                         <Phone size={16} color="#cbd5e1" />
                         <TextInput
+                          placeholder="phone number"
+                          placeholderTextColor="#bacae0"
                           value={updateUser.phoneNo}
                           keyboardType="phone-pad"
                           onChangeText={(val) => setUpdateUser({ ...updateUser, phoneNo: val })}
@@ -398,6 +400,7 @@ export default function Profile() {
                     </View>
                     <TextInput
                       placeholder="Street Address"
+                      placeholderTextColor="#bacae0"
                       value={updateUser.address}
                       onChangeText={(val) => setUpdateUser({ ...updateUser, address: val })}
                       className="bg-slate-50 p-4 rounded-xl font-semibold text-slate-900 mb-4"
@@ -405,12 +408,14 @@ export default function Profile() {
                     <View className="flex-row gap-x-3">
                       <TextInput
                         placeholder="City"
+                        placeholderTextColor="#bacae0"
                         value={updateUser.city}
                         onChangeText={(val) => setUpdateUser({ ...updateUser, city: val })}
                         className="flex-1 bg-slate-50 p-4 rounded-xl font-semibold text-slate-900"
                       />
                       <TextInput
                         placeholder="Zip Code"
+                        placeholderTextColor="#bacae0"
                         value={updateUser.zipCode}
                         onChangeText={(val) => setUpdateUser({ ...updateUser, zipCode: val })}
                         keyboardType="numeric"
@@ -460,6 +465,8 @@ export default function Profile() {
     </SafeAreaView>
   );
 }
+
+
 const DisplayField = ({ label, value, icon: Icon }) => (
   <View className="flex-row items-center p-4 py-3 bg-white rounded-2xl border border-slate-100 mb-3 shadow-sm shadow-slate-200">
     <View className="w-10 h-10 rounded-2xl bg-indigo-50 items-center justify-center">
@@ -469,7 +476,9 @@ const DisplayField = ({ label, value, icon: Icon }) => (
       <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">
         {label}
       </Text>
-      <Text className="text-[15px] font-bold text-slate-800">
+      <Text
+        className={`text-[15px] ${value ? 'font-bold text-slate-800' : 'font-normal text-[9.9px] text-slate-400 italic'}`}
+      >
         {value || "Not provided"}
       </Text>
     </View>
