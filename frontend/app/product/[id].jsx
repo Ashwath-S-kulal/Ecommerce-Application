@@ -191,6 +191,16 @@ export default function ProductPage() {
   const originalPrice = Math.round(product.productPrice * 1.25);
 
 
+  const date = new Date();
+  date.setDate(date.getDate() + 5);
+
+  const expectedDelivery = date.toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
+
   return (
     <View className="flex-1 bg-white">
       <View className="px-6 pt-14 pb-2 bg-white flex-row items-center">
@@ -270,6 +280,12 @@ export default function ProductPage() {
               <Text className="text-sm text-gray-400 line-through font-bold">₹{originalPrice.toLocaleString()}</Text>
               <Text className="text-[10px] font-black text-green-600 uppercase">Save 25%</Text>
             </View>
+          </View>
+          <View className="bg-green-50 border border-green-100 px-4 py-3 rounded-md mb-6 flex-row items-center">
+            <Ionicons name="time-outline" size={16} color="#16a34a" />
+            <Text className="ml-2 text-green-700 text-[12px] font-bold">
+              Expected Delivery: {expectedDelivery}
+            </Text>
           </View>
           <Text className="text-gray-500 italic leading-6 text-[14px] mb-10 border-l-2 border-pink-100 pl-4">
             {product.productDesc || "Handcrafted with premium materials..."}

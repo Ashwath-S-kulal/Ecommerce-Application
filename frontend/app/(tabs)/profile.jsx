@@ -191,7 +191,7 @@ export default function Profile() {
 
 
   const ProfileViewerFooter = ({ file, handleFileChange, handleSubmit, loading, removeImage }) => (
-    <View className="absolute bottom-10 left-6 right-6">
+    <View className="absolute bottom-4 left-6 right-6">
       <View className="bg-white/10 backdrop-blur-xl border border-white/20 p-3 rounded-3xl shadow-2xl">
         {file ? (
           <View className="flex-row gap-3">
@@ -258,13 +258,15 @@ export default function Profile() {
                           }
                         }}
                         FooterComponent={() => (
-                          <ProfileViewerFooter
-                            file={file}
-                            handleFileChange={handleFileChange}
-                            handleSubmit={handleSubmit}
-                            loading={loading}
-                            removeImage={removeImage}
-                          />
+                          <SafeAreaView edges={["bottom"]}>
+                            <ProfileViewerFooter
+                              file={file}
+                              handleFileChange={handleFileChange}
+                              handleSubmit={handleSubmit}
+                              loading={loading}
+                              removeImage={removeImage}
+                            />
+                          </SafeAreaView>
                         )}
                       />
                     </View>

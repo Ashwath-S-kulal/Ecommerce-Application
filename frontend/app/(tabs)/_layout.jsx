@@ -92,8 +92,6 @@ export default function TabsLayout() {
         listeners={{ tabPress: protectTab }}
         options={{
           title: "Wishlist",
-          tabBarBadge: wishlist?.items?.length > 0 ? wishlist.items.length : null,
-          tabBarBadgeStyle: { backgroundColor: "black" },
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="heart" size={size} color={color} />
           ),

@@ -73,7 +73,7 @@ export default function TodayDeliveriesPage() {
                                         <Text className="text-[10px] font-black text-amber-600 uppercase tracking-widest">{item?.status}</Text>
                                     </View>
                                     <Text className="text-slate-900 font-black text-sm" numberOfLines={1}>
-                                        {item.user?.firstName || "Customer"}
+                                        {item.address?.fullName || "Customer"}
                                     </Text>
                                     <Text className="text-slate-500 font-bold text-xs mt-0.5">
                                         ₹{item.amount?.toLocaleString('en-IN')}

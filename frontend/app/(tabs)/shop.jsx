@@ -33,7 +33,7 @@ export default function Shop() {
   const dispatch = useDispatch();
   const router = useRouter();
   const { products, wishlist } = useSelector((state) => state.product);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(products.length === 0);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedBrand, setSelectedBrand] = useState("All");
@@ -108,11 +108,18 @@ export default function Shop() {
 
 
   useEffect(() => {
-    setPage(1);
-    fetchProducts(1, false);
+    if (!products || products.length === 0) {
+      setPage(1);
+      fetchProducts(1, false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedCategory !== "All" || selectedBrand !== "All") {
+      setPage(1);
+      fetchProducts(1, false);
+    }
   }, [selectedCategory, selectedBrand]);
-
-
 
   const showToast = (text) => {
     setToastMsg(text);
@@ -142,7 +149,11 @@ export default function Shop() {
 
       if (res.data.success) {
         if (shouldAppend) {
-          dispatch(setProducts([...products, ...res.data.products]));
+          const newProducts = shouldAppend
+            ? [...products, ...res.data.products]
+            : res.data.products;
+
+          dispatch(setProducts(newProducts));
         } else {
           dispatch(setProducts(res.data.products));
         }
@@ -208,22 +219,50 @@ export default function Shop() {
 
 
 
-  const ProductSkeleton = () => (
-    <View className="bg-white mx-4 mb-4 p-4 flex-row border border-slate-50 rounded-2xl">
-      <View className="w-28 h-28 bg-slate-100 rounded-xl animate-pulse" />
-      <View className="flex-1 ml-4 justify-between">
-        <View>
-          <View className="h-4 w-3/4 bg-slate-100 rounded-lg mb-2 animate-pulse" />
-          <View className="h-3 w-1/3 bg-slate-100 rounded-lg animate-pulse" />
+  const ProductSkeleton = () => {
+    const opacity = useRef(new Animated.Value(0.3)).current;
+    useEffect(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacity, {
+            toValue: 0.7,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }, []);
+
+    return (
+      <Animated.View
+        style={{ opacity }}
+        className="flex-row border-b-4 border-slate-100 p-4 px-8 pt-10 bg-white"
+      >
+        <View className="w-32 h-32 bg-slate-200 rounded-xl" />
+        <View className="flex-1 ml-4 justify-between">
+          <View>
+            <View className="flex-row justify-between items-start">
+              <View className="flex-1 gap-2">
+                <View className="h-5 bg-slate-200 rounded-md w-3/4" />
+                <View className="h-3 bg-slate-200 rounded-md w-1/4" />
+              </View>
+              <View className="w-6 h-6 bg-slate-200 rounded-full ml-2" />
+            </View>
+            <View className="h-7 bg-slate-200 rounded-md w-1/2 mt-3" />
+          </View>
+          <View className="flex-row gap-5">
+            <View className="flex-1 h-10 bg-slate-200 rounded-md" />
+            <View className="flex-[2] h-10 bg-slate-200 rounded-lg" />
+          </View>
         </View>
-        <View className="h-5 w-20 bg-slate-100 rounded-lg animate-pulse" />
-        <View className="flex-row gap-3 mt-2">
-          <View className="flex-1 h-10 bg-slate-50 rounded-xl animate-pulse" />
-          <View className="flex-[2] h-10 bg-slate-100 rounded-xl animate-pulse" />
-        </View>
-      </View>
-    </View>
-  );
+      </Animated.View>
+    );
+  };
 
 
   const handleLoadMore = () => {
@@ -248,7 +287,7 @@ export default function Shop() {
           </View>
         </View>
         <ScrollView showsVerticalScrollIndicator={false} className="pt-4">
-          {[1, 2, 3, 4,5,6,7,8].map((key) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((key) => (
             <ProductSkeleton key={key} />
           ))}
         </ScrollView>
@@ -295,7 +334,7 @@ export default function Shop() {
             {suggestions.map((item) => (
               <TouchableOpacity
                 key={item._id}
-                onPress={() => selectSuggestion(item)} // Now filters the current page
+                onPress={() => selectSuggestion(item)}
                 className="flex-row items-center p-3 border-b border-gray-50 active:bg-gray-50"
               >
                 <Image
@@ -322,7 +361,6 @@ export default function Shop() {
       ) : (
         <View className="flex-1">
 
-          {/* ACTIVE FILTERS & RESET ALL BAR */}
           {(selectedCategory !== "All" || selectedBrand !== "All" || priceLimit < maxAvailablePrice) && (
             <View className="px-6 py-2 flex-row items-center justify-between bg-white/50 border-b border-gray-100">
               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-1">
@@ -440,7 +478,7 @@ const ProductCard = ({
     </View>
     <View className="flex-1 ml-4 justify-between">
       <View>
-        <View className="flex-row justify-start items-center">
+        <View className="flex-row justify-start items-center mt-1">
           <View className="flex-1">
             <Text numberOfLines={1} className="text-md font-bold text-slate-900">
               {item.productName}
@@ -449,20 +487,20 @@ const ProductCard = ({
               {item.brand || "Premium"}
             </Text>
           </View>
-          <TouchableOpacity onPress={onWishlist} disabled={isWishlistLoading} className="p-5 pb-0">
+          <TouchableOpacity onPress={onWishlist} disabled={isWishlistLoading}>
             {isWishlistLoading ? (
               <ActivityIndicator size="small" color="#000" />
             ) : (
               <FontAwesome
                 name={isInWishlist ? "heart" : "heart-o"}
-                size={20}
+                size={22}
                 color={isInWishlist ? "#ef4444" : "#cbd5e1"}
               />
             )}
           </TouchableOpacity>
         </View>
 
-        <Text className="text-xl font-black text-black mt-1">
+        <Text className="text-xl font-black text-black mt-3">
           ₹{item.productPrice.toLocaleString()}
         </Text>
       </View>

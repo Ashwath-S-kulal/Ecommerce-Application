@@ -39,6 +39,47 @@ export default function AdminProduct() {
   const dispatch = useDispatch();
   const [deletingId, setDeletingId] = useState(null);
 
+  const [page, setPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+
+  const fetchProducts = async (pageNum = 1, shouldAppend = false) => {
+    try {
+      if (pageNum === 1) setLoading(true);
+      if (pageNum > 1) setLoadingMore(true);
+
+      const res = await axios.get(`${BASE_URL}/api/product/getallproducts`, {
+        params: {
+          page: pageNum,
+          limit: 12,
+        }
+      });
+
+      if (res.data.success) {
+        if (shouldAppend) {
+          dispatch(setProducts([...products, ...res.data.products]));
+        } else {
+          dispatch(setProducts(res.data.products));
+        }
+
+        setHasMore(res.data.hasMore);
+        setPage(pageNum);
+      }
+
+    } catch (err) {
+      console.log("Fetch Error:", err);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const loadMoreProducts = () => {
+    if (!hasMore || loadingMore) return;
+    fetchProducts(page + 1, true);
+  };
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -195,6 +236,27 @@ export default function AdminProduct() {
     );
   };
 
+
+  const getAllProductsOnce = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axios.get(`${BASE_URL}/api/product/getallproductsonce`);
+
+      if (res.data.success) {
+        dispatch(setProducts(res.data.products));
+        setHasMore(false); // disable load more
+        setPage(1);
+      }
+
+    } catch (err) {
+      console.log("Fetch Once Error:", err);
+      Alert.alert("Error", "Failed to load all products");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-[#f9fafb]">
       <View className="p-4">
@@ -206,70 +268,63 @@ export default function AdminProduct() {
           </View>
         </View>
 
-        <View className="flex-row gap-2 mb-6">
-          <View className="flex-1 relative justify-center">
-            <View className="absolute left-3 z-10"><Search size={16} color="#64748b" /></View>
+        <View className="flex-row items-center gap-2 mb-6">
+          <View className="flex-1 h-12 bg-white border border-slate-200 rounded-xl flex-row items-center px-4 shadow-sm">
+            <Search size={18} color="#94a3b8" />
             <TextInput
               placeholder="Search products..."
-               placeholderTextColor="#94a3b8"
-              className="bg-white border border-slate-100 rounded-md h-12 pl-10 pr-4 shadow-sm"
+              placeholderTextColor="#94a3b8"
+              className="flex-1 ml-3 text-slate-700 h-full"
               value={searchTerm}
               onChangeText={setSearchTerm}
             />
           </View>
-          <View className="relative ">
-            <TouchableOpacity
-              onPress={() => setShowSortDropdown(!showSortDropdown)}
-              className="flex-row items-center bg-white border border-slate-200 px-4 h-12 rounded-md shadow-sm" numberOfLines={1}
-            >
-              <ArrowUpDown size={16} color="#64748b" />
-              <Text className="ml-2 text-slate-600 font-semibold text-sm" numberOfLines={1}>
-                {sortOrder === "recent"
-                  ? "Recent"
-                  : sortOrder === "lowToHigh"
-                    ? "Low to High"
-                    : "High to Low"}
-              </Text>
-            </TouchableOpacity>
 
-            {showSortDropdown && (
-              <View className="absolute top-14 right-0 bg-white border border-slate-200 rounded-xl shadow-md w-40 z-20">
+          <TouchableOpacity
+            onPress={() => setShowSortDropdown(!showSortDropdown)}
+            className="h-12 w-12 bg-white border border-slate-200 rounded-xl items-center justify-center shadow-sm"
+          >
+            <ArrowUpDown size={18} color="#475569" />
+          </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={() => {
-                    setSortOrder("recent");
-                    setShowSortDropdown(false);
-                  }}
-                  className="px-4 py-3 border-b border-slate-100"
-                >
-                  <Text className="text-slate-700">Recent</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => {
-                    setSortOrder("lowToHigh");
-                    setShowSortDropdown(false);
-                  }}
-                  className="px-4 py-3 border-b border-slate-100"
-                >
-                  <Text className="text-slate-700">Low to High</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    setSortOrder("highToLow");
-                    setShowSortDropdown(false);
-                  }}
-                  className="px-4 py-3"
-                >
-                  <Text className="text-slate-700">High to Low</Text>
-                </TouchableOpacity>
-              </View>
+          <TouchableOpacity
+            onPress={getAllProductsOnce}
+            disabled={!hasMore}
+            className={`flex-row items-center h-12 px-3 rounded-xl shadow-sm gap-2 ${!hasMore ? "bg-zinc-400" : "bg-zinc-900"
+              }`}
+          >
+            {loading ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <Package size={18} color="white" />
             )}
-          </View>
+            <Text className="text-white font-bold text-xs tracking-wider">
+              Fetch All
+            </Text>
+          </TouchableOpacity>
+
+          {showSortDropdown && (
+            <View className="absolute top-14 right-[60px] bg-white border border-slate-100 rounded-xl shadow-xl w-40 z-50 p-1">
+              {["recent", "lowToHigh", "highToLow"].map((order) => (
+                <TouchableOpacity
+                  key={order}
+                  onPress={() => {
+                    setSortOrder(order);
+                    setShowSortDropdown(false);
+                  }}
+                  className={`px-4 py-3 rounded-lg ${sortOrder === order ? 'bg-slate-50' : ''}`}
+                >
+                  <Text className={`text-sm ${sortOrder === order ? 'font-bold text-zinc-900' : 'text-slate-600'}`}>
+                    {order === "recent" ? "Recent" : order === "lowToHigh" ? "Low to High" : "High to Low"}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
         </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} className="mb-20 ">
-          <View className="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden mb-20">
+        <ScrollView showsVerticalScrollIndicator={false} className="mb-20 ">
+          <View className="bg-white rounded-md border border-slate-200 shadow-sm overflow-hidden mb-40">
             {filteredProducts.map((product, index) => (
               <View
                 key={product._id}
@@ -337,6 +392,17 @@ export default function AdminProduct() {
                 </View>
               </View>
             ))}
+
+            {hasMore && (
+              <TouchableOpacity
+                onPress={loadMoreProducts}
+                className="mx-3 my-4 py-4 border border-slate-200 rounded-2xl items-center bg-white shadow-sm"
+              >
+                <Text className="text-black font-black uppercase text-[10px] tracking-widest">
+                  {loading ? "Loading..." : "View More Products"}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </ScrollView>
       </View>

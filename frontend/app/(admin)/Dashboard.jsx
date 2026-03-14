@@ -9,14 +9,15 @@ import axios from 'axios';
 import {
   Users, ShoppingBag, PackageSearch, ArrowRight,
   IndianRupee, Package, PlusCircle, TrendingUp,
-  Activity
+  Activity,
+  ChevronRight
 } from 'lucide-react-native';
 import { LineChart } from "react-native-chart-kit";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from "expo-constants";
 
 
-const { width } = Dimensions.get('window');
+const width = Dimensions.get("window").width;
 
 const AdminDashboard = () => {
   const router = useRouter();
@@ -28,6 +29,7 @@ const AdminDashboard = () => {
   const [weeklyData, setWeeklyData] = useState(null);
   const [monthlyData, setMonthlyData] = useState(null);
   const [yearlyData, setYearlyData] = useState(null);
+  const [showCharts, setShowCharts] = useState(false);
 
   const BASE_URL = Constants.expoConfig.extra.apiUrl;
 
@@ -46,28 +48,29 @@ const AdminDashboard = () => {
         })
       ]);
 
-      const orders = orderRes.data.orders || orderRes.data || [];
-      const users = userRes.data.users || userRes.data || [];
-      const products = productRes.data.products || productRes.data || [];
+      const orders = orderRes.data.orders || [];
+      const users = userRes.data.users || [];
+      const products = productRes.data.products || [];
 
       setStats({
-        users: Array.isArray(users) ? users.length : 0,
-        products: Array.isArray(products) ? products.length : 0,
+        users: users.length,
+        products: products.length,
         totalOrders: orders.length,
         revenue: orders
-          .filter(o => o.status === 'Delivered')
-          .reduce((acc, o) => acc + (Number(o.totalAmount) || Number(o.amount) || 0), 0)
+          .filter(o => o.status === "Delivered")
+          .reduce((acc, o) => acc + Number(o.totalAmount || o.amount || 0), 0)
       });
-
-      processAllAnalytics(orders);
-    } catch (err) {
-      console.error("Fetch Error:", err.message);
-    } finally {
       setLoading(false);
+      setTimeout(() => {
+        processAllAnalytics(orders);
+      }, 0);
+
+    } catch (err) {
+      console.log("Dashboard Error:", err);
+    } finally {
       setRefreshing(false);
     }
   };
-
 
 
   const processAllAnalytics = (orders) => {
@@ -133,8 +136,12 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+    const timer = setTimeout(() => {
+      setShowCharts(true);
+    }, 600);
 
+    return () => clearTimeout(timer);
+  }, []);
 
 
   const onRefresh = () => {
@@ -143,13 +150,7 @@ const AdminDashboard = () => {
   };
 
 
-  if (loading && !refreshing) {
-    return (
-      <SafeAreaView className="flex-1 bg-[#F8FAFC]">
-        <AdminSkeleton />
-      </SafeAreaView>
-    );
-  }
+
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]">
@@ -163,66 +164,73 @@ const AdminDashboard = () => {
           <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Manage Sanjeevini Products</Text>
         </View>
 
-        <View className="flex-row flex-wrap justify-center gap-4 mb-4">
+        <View className="gap-3 mb-4">
+          <TouchableOpacity
+            onPress={() => router.push("/(admin)/StorageCard")}
+            activeOpacity={0.7}
+            className="bg-zinc-900 p-4 rounded-xl flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center gap-4">
+              <View className="w-10 h-10 bg-emerald-500/10 rounded-lg items-center justify-center">
+                <Activity size={20} color="#10b981" />
+              </View>
+              <View>
+                <Text className="text-white font-bold text-sm">Database Storage</Text>
+                <Text className="text-zinc-500 text-[10px] uppercase">Cloud & DB Status</Text>
+              </View>
+            </View>
+            <ArrowRight size={16} color="#52525b" />
+          </TouchableOpacity>
+
           {navItems.map((item) => (
             <TouchableOpacity
               key={item.to}
               onPress={() => router.push(item.to)}
-              style={{ width: width * 0.44 }}
-              className="bg-white border border-slate-100 rounded-md p-4 shadow-sm flex-row items-center gap-3"
+              className="bg-white border border-slate-100 rounded-xl p-4 flex-row items-center justify-between shadow-sm"
             >
-              <View className={`w-10 h-10 rounded-full ${item.color} items-center justify-center`}>
-                {item.icon}
+              <View className="flex-row items-center gap-4">
+                <View className={`w-10 h-10 rounded-lg ${item.color} items-center justify-center opacity-90`}>
+                  {item.icon}
+                </View>
+                <Text className="text-sm font-semibold text-slate-800" numberOfLines={1}>
+                  {item.label}
+                </Text>
               </View>
-              <Text className="text-[12px] font-bold text-slate-900">{item.label}</Text>
+              <ChevronRight size={16} color="#cbd5e1" />
             </TouchableOpacity>
           ))}
         </View>
 
-        <View className="flex-row flex-wrap justify-between mb-2">
-          <KpiCard title="Revenue" value={`₹${stats.revenue.toLocaleString()}`} icon={<IndianRupee size={16} color="white" />} color="bg-emerald-500" />
-          <KpiCard title="Orders" value={stats.totalOrders} icon={<ShoppingBag size={16} color="white" />} color="bg-orange-500" />
-          <KpiCard title="Users" value={stats.users} icon={<Users size={16} color="white" />} color="bg-indigo-500" />
-          <KpiCard title="Products" value={stats.products} icon={<Package size={16} color="white" />} color="bg-blue-500" />
-        </View>
-        <Text className="text-lg font-bold text-slate-900 mb-4 mt-4">Performance Insights</Text>
-
         {loading ? (
-          <ActivityIndicator size="large" color="#6366f1" className="my-10" />
+          <StatsSkeleton />
         ) : (
-          <View className="gap-y-6 pb-10">
-            <ChartSection title="Weekly Sales (Last 7 Days)" data={weeklyData} />
-            <ChartSection title="Monthly Growth (Last 6 Months)" data={monthlyData} />
-            <ChartSection title="Yearly Revenue" data={yearlyData} />
-
-
-            <TouchableOpacity
-              onPress={() => router.push("/(admin)/StorageCard")}
-              activeOpacity={0.7}
-              className="bg-zinc-900 mx-1 p-5 rounded-md flex-row items-center justify-between shadow-lg shadow-emerald-900/20"
-            >
-              <View className="flex-row items-center gap-4">
-                <View className="w-12 h-12 bg-emerald-500/10 rounded-2xl items-center justify-center border border-emerald-500/20">
-                  <Activity size={24} color="#10b981" />
-                </View>
-                <View>
-                  <Text className="text-white font-bold text-base">Your App DataBase Storage</Text>
-                  <View className="flex-row items-center mt-1">
-                    <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
-                    <Text className="text-zinc-400 text-[10px] font-bold uppercase tracking-widest">
-                      Check DB & Cloud Storage
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              <View className="bg-zinc-800 p-2 rounded-full">
-                <ArrowRight size={18} color="#71717a" />
-              </View>
-            </TouchableOpacity>
-
-
+          <View className="flex-row flex-wrap justify-between mb-2">
+            <KpiCard title="Revenue" value={`₹${stats.revenue.toLocaleString()}`} />
+            <KpiCard title="Orders" value={stats.totalOrders} />
+            <KpiCard title="Users" value={stats.users} />
+            <KpiCard title="Products" value={stats.products} />
           </View>
         )}
+
+
+        <Text className="text-lg font-bold text-slate-900 mb-4 mt-4">Performance Insights</Text>
+
+        <View className="gap-y-6 pb-10">
+          {loading ? (
+            <ChartsSkeleton />
+          ) : showCharts ? (
+            <>
+              <ChartSection title="Weekly Sales (Last 7 Days)" data={weeklyData} />
+              <ChartSection title="Monthly Growth (Last 6 Months)" data={monthlyData} />
+              <ChartSection title="Yearly Revenue" data={yearlyData} />
+
+
+            </>
+          ) : (
+            <ActivityIndicator size="large" color="#6366f1" />
+          )}
+        </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -243,7 +251,7 @@ const ChartSection = ({ title, data }) => (
         chartConfig={chartConfig}
         bezier
         style={{ borderRadius: 16, marginLeft: -15 }}
-        fromZero={true}
+        fromZero
       />
     ) : (
       <Text className="text-slate-400 text-xs italic">No data available for this period.</Text>
@@ -280,64 +288,37 @@ const chartConfig = {
 };
 
 const navItems = [
-  { label: "Products", to: "/(admin)/Products", icon: <PackageSearch size={20} color="white" />, color: "bg-blue-500" },
-  { label: "Add Product", to: "/(admin)/AddProducts", icon: <PlusCircle size={20} color="white" />, color: "bg-pink-500" },
-  { label: "Orders", to: "/(admin)/Orders", icon: <ShoppingBag size={20} color="white" />, color: "bg-orange-500" },
-  { label: "Users", to: "/(admin)/Users", icon: <Users size={20} color="white" />, color: "bg-indigo-500" },
+  { label: "Sanjeevini Products", to: "/(admin)/Products", icon: <PackageSearch size={14} color="white" />, color: "bg-blue-500" },
+  { label: "Add New Product", to: "/(admin)/AddProducts", icon: <PlusCircle size={14} color="white" />, color: "bg-pink-500" },
+  { label: "All Orders", to: "/(admin)/Orders", icon: <ShoppingBag size={14} color="white" />, color: "bg-orange-500" },
+  { label: "Sanjeevini Users", to: "/(admin)/Users", icon: <Users size={14} color="white" />, color: "bg-indigo-500" },
 ];
 
 export default AdminDashboard;
 
 
+const StatsSkeleton = () => (
+  <View className="flex-row flex-wrap justify-between mb-2 bg-white border border-slate-100">
+    {[1, 2, 3, 4].map(i => (
+      <View key={i} style={{ width: '50%' }} className="p-5 border border-slate-50">
+        <View className="h-2 w-12 bg-slate-100 rounded mb-2" />
+        <View className="h-6 w-20 bg-slate-200 rounded" />
+      </View>
+    ))}
+  </View>
+);
 
-const AdminSkeleton = () => (
-  <View className="flex-1 px-4 pt-6">
-    <View className="mb-6">
-      <View className="h-7 w-48 bg-slate-200 rounded-md mb-2" />
-      <View className="h-3 w-32 bg-slate-100 rounded-sm" />
-    </View>
-    <View className="flex-row flex-wrap justify-center gap-4 mb-4">
-      {[1, 2, 3, 4].map((i) => (
-        <View
-          key={i}
-          style={{ width: width * 0.44 }}
-          className="bg-white border border-slate-100 rounded-md p-4 flex-row items-center gap-3"
-        >
-          <View className="w-10 h-10 rounded-full bg-slate-100" />
-          <View className="h-3 w-16 bg-slate-100 rounded" />
-        </View>
-      ))}
-    </View>
-    <View className="flex-row flex-wrap justify-between mb-2 bg-white border border-slate-100">
-      {[1, 2, 3, 4].map((i) => (
-        <View
-          key={i}
-          style={{ width: '50%' }}
-          className="p-5 border border-slate-50"
-        >
-          <View className="h-2 w-12 bg-slate-100 rounded mb-2" />
-          <View className="h-6 w-20 bg-slate-200 rounded" />
-        </View>
-      ))}
-    </View>
-
-    <View className="mt-8 gap-y-6">
-      <View className="h-6 w-40 bg-slate-200 rounded mb-2" />
-      <View className="bg-white p-5 border border-slate-100 h-52 items-center justify-center">
+const ChartsSkeleton = () => (
+  <View className="gap-y-6">
+    {[1, 2, 3].map(i => (
+      <View key={i} className="bg-white p-5 border border-slate-100 h-52 items-center justify-center">
         <View className="w-full h-32 bg-slate-50 rounded-xl" />
         <View className="flex-row justify-between w-full mt-4 px-2">
-          {[1, 2, 3, 4, 5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
+          {[1, 2, 3, 4, 5].map(j => (
+            <View key={j} className="h-2 w-8 bg-slate-100" />
+          ))}
         </View>
       </View>
-    </View>
-    <View className="mt-8 gap-y-6">
-      <View className="bg-white p-5 border border-slate-100 h-52 items-center justify-center">
-        <View className="w-full h-32 bg-slate-50 rounded-xl" />
-        <View className="flex-row justify-between w-full mt-4 px-2">
-          {[1, 2, 3, 4, 5].map(i => <View key={i} className="h-2 w-8 bg-slate-100" />)}
-        </View>
-      </View>
-    </View>
-
+    ))}
   </View>
 );

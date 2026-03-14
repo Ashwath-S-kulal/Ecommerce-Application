@@ -30,7 +30,7 @@ const PAGE_SIZE = 15;
 
 export default function Notifications() {
     const { notifications } = useSelector((state) => state.product);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(notifications.length === 0);
     const [refreshing, setRefreshing] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
     const [page, setPage] = useState(1);
@@ -72,7 +72,11 @@ export default function Notifications() {
     };
 
     useEffect(() => {
-        fetchNotifications(1, true);
+        if (!notifications?.length) {
+            fetchNotifications(1, true);
+        } else {
+            setLoading(false);
+        }
     }, []);
 
     const onRefresh = () => {
@@ -108,13 +112,19 @@ export default function Notifications() {
         const groups = [];
         const map = {};
 
+        const today = new Date().toLocaleDateString("en-GB");
+        const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("en-GB");
+
         notifications.forEach((n) => {
             const dateObj = new Date(n.createdAt);
-            const today = new Date().toLocaleDateString('en-GB');
-            const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('en-GB');
-            const current = dateObj.toLocaleDateString('en-GB');
+            const current = dateObj.toLocaleDateString("en-GB");
 
-            let label = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+            let label = dateObj.toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            });
+
             if (current === today) label = "Today";
             else if (current === yesterday) label = "Yesterday";
 
@@ -122,11 +132,12 @@ export default function Notifications() {
                 map[label] = [];
                 groups.push({ title: label, data: map[label] });
             }
+
             map[label].push(n);
         });
+
         return groups;
     }, [notifications]);
-
 
 
     const renderNotificationItem = (n) => {

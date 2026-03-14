@@ -51,7 +51,7 @@ export default function Cart() {
     } catch (error) {
       console.log("Cart load error:", error);
     } finally {
-      setLoading(false); // ✅ important
+      setLoading(false); 
     }
   };
 
@@ -92,9 +92,13 @@ export default function Cart() {
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
+  if (!cart?.items?.length) {
     loadCart();
-  }, []);
+  } else {
+    setLoading(false);
+  }
+}, []);
 
   if (!cart?.items?.length) {
     return (
@@ -217,7 +221,7 @@ export default function Cart() {
             </View>
             <View className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
               <View
-                className="h-full bg-pink-500 rounded-full"
+                className="h-full bg-pink-400 rounded-full"
                 style={{ width: `${progressToFreeShipping}%` }}
               />
             </View>

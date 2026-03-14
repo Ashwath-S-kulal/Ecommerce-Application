@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Image, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Animated } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
-import { Heart, ShoppingCart, X } from 'lucide-react-native';
+import { Heart, ShoppingCart, Trash, Trash2, X } from 'lucide-react-native';
 import axios from 'axios';
 import { setWishlist, setCart } from '@/redux/productSlice';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -96,9 +96,13 @@ export default function Wishlist() {
   };
 
 
-  useEffect(() => {
+useEffect(() => {
+  if (!wishlist?.items?.length) {
     loadWishlist();
-  }, []);
+  } else {
+    setLoading(false);
+  }
+}, []);
 
   const WishlistSkeleton = () => (
     <View className="bg-white p-4 mb-4 rounded-2xl border border-slate-100 shadow-sm shadow-slate-200">
@@ -189,12 +193,12 @@ export default function Wishlist() {
             <TouchableOpacity
               onPress={() => handleRemove(item.productId?._id)}
               disabled={isRemovingId === item.productId?._id}
-              className="absolute top-4 right-4 z-10 w-8 h-8 bg-slate-50 rounded-full items-center justify-center active:scale-95"
+              className="absolute top-4 right-4 z-10 w-8 h-8 items-center justify-center active:scale-95"
             >
               {isRemovingId === item.productId?._id ? (
-                <ActivityIndicator size="small" color="#64748b" />
+                <ActivityIndicator size="small" color="#cf0213" />
               ) : (
-                <X size={20} color="#64748b" />
+                <Trash2 size={20} color="#cf0213" />
               )}
             </TouchableOpacity>
 
@@ -229,14 +233,13 @@ export default function Wishlist() {
                 }`}
             >
               {isAddingId === item.productId?._id ? (
-                <ActivityIndicator size="small" color="#64748b" />
+                <ActivityIndicator size="small" color="#d11990" />
               ) : (
                 <>
-                  <ShoppingCart size={16} color="#d11990" />
-
+                  <ShoppingCart size={18} color="#d11990" />
                 </>
               )}
-              <Text className="text-pink-500 font-bold ml-2 text-xs uppercase tracking-wider" numberOfLines={1}>
+              <Text className="text-pink-500 font-bold ml-2 text-sm uppercase tracking-wider" numberOfLines={1}>
                 Add to cart
               </Text>
             </TouchableOpacity>

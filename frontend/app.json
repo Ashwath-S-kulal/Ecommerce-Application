@@ -13,9 +13,9 @@
     },
     "android": {
       "statusBar": {
-    "backgroundColor": "#ec4899",
-    "translucent": true
-  },
+        "backgroundColor": "#ec4899",
+        "translucent": true
+      },
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/logo.jpeg",
@@ -58,10 +58,11 @@
     },
     "extra": {
       "router": {},
+      "apiUrl": "https://ecommerce-website-gilt-six.vercel.app",
       "eas": {
-        "projectId": "27a26099-78d1-4de1-9856-eea2bc90c8db"
-      },
-      "apiUrl": "https://ecommerce-website-gilt-six.vercel.app"
+        "projectId": "5a660bdc-5c76-42b2-83e6-943410e2e85b"
+      }
+
     }
   }
 }
