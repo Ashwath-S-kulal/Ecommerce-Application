@@ -9,6 +9,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Animated,
+  Alert,
 } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { FontAwesome, Ionicons } from "@expo/vector-icons";
@@ -121,7 +122,29 @@ export default function ProductPage() {
 
   const addToCart = async () => {
     const token = await AsyncStorage.getItem("accessToken");
-    if (!token) return showLocalToast("Please login to add items");
+    if (!token) {
+      return Alert.alert(
+        "Login Required",
+        "Please login or create an account to continue.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Login",
+            onPress: () => router.push("/login"),
+          },
+          {
+            text: "Sign Up",
+            onPress: () => router.push("/signup"),
+          },
+        ],
+        {
+          cancelable: true,
+        }
+      );
+    }
 
     setLoading(true);
     try {
@@ -145,7 +168,29 @@ export default function ProductPage() {
 
   const toggleWishlist = async () => {
     const token = await AsyncStorage.getItem("accessToken");
-    if (!token) return showLocalToast("Please login first");
+    if (!token) {
+      return Alert.alert(
+        "Login Required",
+        "Please login or create an account to continue.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Login",
+            onPress: () => router.push("/login"),
+          },
+          {
+            text: "Sign Up",
+            onPress: () => router.push("/signup"),
+          },
+        ],
+        {
+          cancelable: true,
+        }
+      );
+    }
 
     const isInWishlist = wishlist?.items?.some(item => item.productId?._id === product?._id);
     const endpoint = isInWishlist ? `${BASE_URL}/api/wishlist/remove` : `${BASE_URL}/api/wishlist/add`;
@@ -172,9 +217,30 @@ export default function ProductPage() {
 
 
 
-  const handlePlaceOrder = () => {
-    if (!user) {
-      return showLocalToast("Please login to place an order");
+  const handlePlaceOrder = async () => {
+    const token = await AsyncStorage.getItem("accessToken");
+    if (!token) {
+      return Alert.alert(
+        "Login Required",
+        "Please login or create an account to continue.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Login",
+            onPress: () => router.push("/login"),
+          },
+          {
+            text: "Sign Up",
+            onPress: () => router.push("/signup"),
+          },
+        ],
+        {
+          cancelable: true,
+        }
+      );
     }
     router.push({
       pathname: "/components/AddressFormSingle",

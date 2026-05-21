@@ -71,9 +71,30 @@ export default function Shop() {
     []
   );
 
-  const handlePlaceOrder = (product) => {
-    if (!user) {
-      return Alert.alert("Login Required", "Please login to place an order");
+  const handlePlaceOrder = async (product) => {
+    const token = await AsyncStorage.getItem("accessToken");
+    if (!token) {
+      return Alert.alert(
+        "Login Required",
+        "Please login or create an account to continue.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Login",
+            onPress: () => router.push("/login"),
+          },
+          {
+            text: "Sign Up",
+            onPress: () => router.push("/signup"),
+          },
+        ],
+        {
+          cancelable: true,
+        }
+      );
     }
     router.push({
       pathname: "/components/AddressFormSingle",
@@ -180,7 +201,29 @@ export default function Shop() {
 
   const toggleWishlist = async (productId) => {
     const token = await AsyncStorage.getItem("accessToken");
-    if (!token) return Alert.alert("Login Required", "Please login.");
+    if (!token) {
+      return Alert.alert(
+        "Login Required",
+        "Please login or create an account to continue.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Login",
+            onPress: () => router.push("/login"),
+          },
+          {
+            text: "Sign Up",
+            onPress: () => router.push("/signup"),
+          },
+        ],
+        {
+          cancelable: true,
+        }
+      );
+    }
     const isInWishlist = wishlist?.items?.some((item) => item.productId?._id === productId);
     setWishlistLoadingId(productId);
     try {
@@ -203,7 +246,29 @@ export default function Shop() {
 
   const addToCart = async (productId) => {
     const token = await AsyncStorage.getItem("accessToken");
-    if (!token) return Alert.alert("Login Required", "Please login.");
+    if (!token) {
+      return Alert.alert(
+        "Login Required",
+        "Please login or create an account to continue.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Login",
+            onPress: () => router.push("/login"),
+          },
+          {
+            text: "Sign Up",
+            onPress: () => router.push("/signup"),
+          },
+        ],
+        {
+          cancelable: true,
+        }
+      );
+    }
     setActionLoading({ id: productId, type: 'cart' });
     try {
       const res = await axios.post(`${BASE_URL}/api/cart/add`, { productId }, { headers: { Authorization: `Bearer ${token}` } });
@@ -213,7 +278,7 @@ export default function Shop() {
       }
     } catch (e) { showToast("Failed to add to cart"); }
     finally {
-      setActionLoading({ id: null, type: null }); // Stop loading
+      setActionLoading({ id: null, type: null });
     }
   };
 

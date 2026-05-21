@@ -1,13 +1,18 @@
-import React, { useEffect } from "react";
-import { BackHandler, Platform } from "react-native";
+import React, { useEffect, useState } from "react";
+import { BackHandler } from "react-native";
 import { Tabs, router, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import { isTokenExpired } from "../utils/auth";
+
 import "../../global.css";
 
 export default function TabsLayout() {
   const { user } = useSelector((state) => state.user);
-  const { cart, wishlist } = useSelector((state) => state.product);
+  const { cart } = useSelector((state) => state.product);
+
   const pathname = usePathname();
 
   useEffect(() => {
@@ -16,6 +21,7 @@ export default function TabsLayout() {
         router.back();
         return true;
       }
+
       return false;
     };
 
@@ -27,9 +33,28 @@ export default function TabsLayout() {
     return () => backHandlerSubscription.remove();
   }, [pathname]);
 
-  const protectTab = (e) => {
-    if (!user) {
-      e.preventDefault();
+
+  const protectTab = async (e, route) => {
+    e.preventDefault();
+
+    try {
+      const token = await AsyncStorage.getItem("accessToken");
+
+      if (!user || !token) {
+        router.push("/components/new");
+        return;
+      }
+
+      if (isTokenExpired(token)) {
+        await AsyncStorage.removeItem("accessToken");
+
+        router.push("/components/new");
+        return;
+      }
+
+      router.push(route);
+
+    } catch (error) {
       router.push("/components/new");
     }
   };
@@ -47,10 +72,10 @@ export default function TabsLayout() {
           textTransform: "uppercase",
         },
         tabBarStyle: {
-          height: 65, 
+          height: 65,
           paddingTop: 10,
           paddingBottom: 15,
-          backgroundColor: '#ffffff',
+          backgroundColor: "#ffffff",
         },
       }}
     >
@@ -76,7 +101,9 @@ export default function TabsLayout() {
 
       <Tabs.Screen
         name="cart"
-        listeners={{ tabPress: protectTab }}
+        listeners={{
+          tabPress: (e) => protectTab(e, "/cart"),
+        }}
         options={{
           title: "Cart",
           tabBarBadge: cart?.items?.length > 0 ? cart.items.length : null,
@@ -89,7 +116,9 @@ export default function TabsLayout() {
 
       <Tabs.Screen
         name="wishlist"
-        listeners={{ tabPress: protectTab }}
+        listeners={{
+          tabPress: (e) => protectTab(e, "/wishlist"),
+        }}
         options={{
           title: "Wishlist",
           tabBarIcon: ({ color, size }) => (
@@ -100,7 +129,9 @@ export default function TabsLayout() {
 
       <Tabs.Screen
         name="profile"
-        listeners={{ tabPress: protectTab }}
+        listeners={{
+          tabPress: (e) => protectTab(e, "/profile"),
+        }}
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => (
@@ -111,3 +142,5 @@ export default function TabsLayout() {
     </Tabs>
   );
 }
+
+
